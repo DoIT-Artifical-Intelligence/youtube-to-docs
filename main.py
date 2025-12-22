@@ -7,4 +7,14 @@
 #     "youtube-transcript-api>=1.2.3"
 # ]
 # ///
+# 
+# Run as `uv run https://raw.githubusercontent.com/DoIT-Artifical-Intelligence/youtube-to-docs/refs/heads/main/main.py`
 print("hello world")
+import os
+
+try:
+    YOUTUBE_DATA_API_KEY = os.environ["YOUTUBE_DATA_API_KEY"]
+except:
+    YOUTUBE_DATA_API_KEY = None
+print(YOUTUBE_DATA_API_KEY)
+    
