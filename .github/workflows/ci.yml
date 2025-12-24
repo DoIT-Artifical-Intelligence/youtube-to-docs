@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Set up Python
+      run: uv python install
+
+    - name: Install dependencies
+      run: uv pip install -r requirements.txt
+
+    - name: Ruff Lint
+      run: uv tool run ruff check .
+
+    - name: Ruff Format
+      run: uv tool run ruff format --check .
+
+    - name: Type Check
+      run: uv tool run ty check
+
+    - name: Run Tests
+      run: uv run --with-requirements requirements.txt pytest
