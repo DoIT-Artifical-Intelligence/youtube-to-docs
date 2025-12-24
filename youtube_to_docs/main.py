@@ -13,14 +13,14 @@
 # ///
 #
 # Run as:
-# uv run https://raw.githubusercontent.com/DoIT-Artifical-Intelligence/youtube-to-docs/refs/heads/main/main.py -- @mga-hgo1740 --model gemini-3-flash-preview  # noqa
+# uv run https://raw.githubusercontent.com/DoIT-Artifical-Intelligence/youtube-to-docs/refs/heads/main/youtube_to_docs/main.py --model gemini-3-flash-preview  # noqa
 # To test locally run one of:
-# uv run main.py --model gemini-3-flash-preview
-# uv run main.py --model vertex-claude-haiku-4-5@20251001
-# uv run main.py --model bedrock-claude-haiku-4-5-20251001-v1
-# uv run main.py --model bedrock-nova-2-lite-v1
-# uv run main.py --model bedrock-claude-haiku-4-5-20251001
-# uv run main.py --model foundry-gpt-5-mini
+# uv run youtube_to_docs/main.py --model gemini-3-flash-preview
+# uv run youtube_to_docs/main.py --model vertex-claude-haiku-4-5@20251001
+# uv run youtube_to_docs/main.py --model bedrock-claude-haiku-4-5-20251001-v1
+# uv run youtube_to_docs/main.py --model bedrock-nova-2-lite-v1
+# uv run youtube_to_docs/main.py --model bedrock-claude-haiku-4-5-20251001
+# uv run youtube_to_docs/main.py --model foundry-gpt-5-mini
 
 
 import argparse
