@@ -1,0 +1,44 @@
+[project]
+name = "youtube-to-docs"
+version = "0.1.0"
+description = "Convert YouTube videos to docs/sheets for discoverability"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "google-auth>=2.45.0",
+    "google-genai>=1.56.0",
+    "google-api-python-client>=2.187.0",
+    "isodate>=0.7.2",
+    "openai>=1.56.0",
+    "polars>=1.36.1",
+    "requests>=2.32.5",
+    "youtube-transcript-api>=1.2.3",
+]
+
+[tool.ruff]
+# Match the project's Python version requirement
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`), pycodestyle (`E`, `W`), and isort (`I`)
+select = ["E", "F", "I", "W"]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+# Use double quotes for strings.
+quote-style = "double"
+# Indent with spaces, rather than tabs.
+indent-style = "space"
+# Respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.ty.environment]
+# Target Python 3.14 to match project requirements
+python-version = "3.14"

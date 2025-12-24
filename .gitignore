@@ -211,3 +211,5 @@ transcript-files/
 summary-files/
 
 implementation_plan.md
+
+uv.lock
