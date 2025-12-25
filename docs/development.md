@@ -14,6 +14,25 @@
    pip install -r requirements.txt
    ```
 
+2. Install the package in editable mode (optional, but recommended for development):
+   ```bash
+   uv pip install -e .
+   ```
+
+## Usage
+
+To run the script locally using the entry point defined in `pyproject.toml`:
+
+```bash
+uv run youtube-to-docs --model gemini-3-flash-preview
+```
+
+Alternatively, you can run it as a module:
+
+```bash
+uv run python -m youtube_to_docs.main --model gemini-3-flash-preview
+```
+
 ## Running Tests
 
 We use `pytest` for testing.
@@ -24,6 +43,16 @@ To run tests with all dependencies automatically handled:
 
 ```bash
 uv run --with-requirements requirements.txt pytest
+```
+
+## Utilities
+
+### Cleanup
+
+To delete the generated CSV file and transcript/summary directories:
+
+```powershell
+Remove-Item -Path "youtube-docs.csv", "transcript-files", "summary-files" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
 ## Project Structure
