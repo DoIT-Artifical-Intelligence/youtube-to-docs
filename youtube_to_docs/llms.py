@@ -1,4 +1,6 @@
 import os
+import re
+from typing import Tuple
 
 import google.auth
 import requests
@@ -8,11 +10,67 @@ from google.genai import types
 from openai import OpenAI
 
 
+def normalize_model_name(model_name: str) -> str:
+    """
+    Normalizes a model name by stripping prefixes and suffixes.
+    Suffixes handled: @20251001, -20251001-v1, -v1.
+    Prefixes handled: vertex-, bedrock-, foundry-.
+    """
+    # Strip prefixes
+    normalized = model_name
+    prefixes = ["vertex-", "bedrock-", "foundry-"]
+    for prefix in prefixes:
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix) :]
+            break
+
+    # Strip suffixes using regex: (@\d{8}|-\d{8}-v\d+|-v\d+)$
+    normalized = re.sub(r"(@\d{8}|-\d{8}-v\d+|-v\d+)$", "", normalized)
+
+    return normalized
+
+
+def get_model_pricing(model_name: str) -> Tuple[float, float]:
+    """
+    Fetches model pricing from llm-prices repository.
+    Returns (input_price_per_1m, output_price_per_1m).
+    """
+    try:
+        url = "https://www.llm-prices.com/current-v1.json"
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            prices = data.get("prices", [])
+
+            # 1. Try exact match first
+            for p in prices:
+                if p["id"] == model_name:
+                    return p["input"], p["output"]
+
+            # 2. Try normalized name
+            normalized_name = normalize_model_name(model_name)
+            for p in prices:
+                if p["id"] == normalized_name:
+                    return p["input"], p["output"]
+
+            print(
+                f"model {model_name} is not found in "
+                "https://www.llm-prices.com/current-v1.json"
+            )
+
+    except Exception as e:
+        print(f"Error fetching pricing data: {e}")
+
+    return None, None
+
+
 def generate_summary(
     model_name: str, transcript: str, video_title: str, url: str
-) -> str:
-    """Generates a summary using the specified LLM provider."""
+) -> Tuple[str, int, int]:
+    """Generates a summary and returns (summary_text, input_tokens, output_tokens)."""
     summary_text = ""
+    input_tokens = 0
+    output_tokens = 0
     prompt = (
         f"I have included a transcript for {url} ({video_title})"
         "\n\n"
@@ -34,6 +92,9 @@ def generate_summary(
                 ],
             )
             summary_text = response.text or ""
+            if response.usage_metadata:
+                input_tokens = response.usage_metadata.prompt_token_count or 0
+                output_tokens = response.usage_metadata.candidates_token_count or 0
         except KeyError:
             print("Error: GEMINI_API_KEY not found")
             summary_text = "Error: GEMINI_API_KEY not found"
@@ -78,6 +139,10 @@ def generate_summary(
                         summary_text = content_blocks[0]["text"]
                     else:
                         summary_text = f"Unexpected response format: {response.text}"
+
+                    usage = response_json.get("usage", {})
+                    input_tokens = usage.get("input_tokens", 0)
+                    output_tokens = usage.get("output_tokens", 0)
                 else:
                     summary_text = (
                         f"Vertex API Error {response.status_code}: {response.text}"
@@ -134,6 +199,10 @@ def generate_summary(
                         summary_text = content_blocks[0]["text"]
                     else:
                         summary_text = f"Unexpected content format: {response_json}"
+
+                    usage = response_json.get("usage", {})
+                    input_tokens = usage.get("inputTokens", 0)
+                    output_tokens = usage.get("outputTokens", 0)
                 except KeyError:
                     summary_text = f"Unexpected response structure: {response_json}"
             else:
@@ -168,6 +237,9 @@ def generate_summary(
                 ],
             )
             summary_text = completion.choices[0].message.content
+            if completion.usage:
+                input_tokens = completion.usage.prompt_tokens
+                output_tokens = completion.usage.completion_tokens
         except KeyError:
             print(
                 "Error: AZURE_FOUNDRY_ENDPOINT and AZURE_FOUNDRY_API_KEY "
@@ -178,4 +250,4 @@ def generate_summary(
             print(f"Foundry Request Error: {e}")
             summary_text = f"Error: {e}"
 
-    return summary_text
+    return summary_text, input_tokens, output_tokens

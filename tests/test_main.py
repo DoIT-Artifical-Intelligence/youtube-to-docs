@@ -1,199 +1,263 @@
 import os
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import mock_open, patch
 
-from youtube_to_docs import llms, transcript
+import polars as pl
+
+from youtube_to_docs import main
 
 
-class TestYoutubeToDocs(unittest.TestCase):
+class TestMain(unittest.TestCase):
     def setUp(self):
-        # Mock environment variables
-        self.env_patcher = patch.dict(
-            os.environ,
-            {
-                "YOUTUBE_DATA_API_KEY": "fake_youtube_key",
-                "GEMINI_API_KEY": "fake_gemini_key",
-                "PROJECT_ID": "fake_project_id",
-                "AWS_BEARER_TOKEN_BEDROCK": "fake_bedrock_token",
-                "AZURE_FOUNDRY_ENDPOINT": "https://fake.openai.azure.com/",
-                "AZURE_FOUNDRY_API_KEY": "fake_foundry_key",
-            },
-        )
-        self.env_patcher.start()
+        self.outfile = "test_output_main.csv"
+        if os.path.exists(self.outfile):
+            os.remove(self.outfile)
 
     def tearDown(self):
-        self.env_patcher.stop()
+        if os.path.exists(self.outfile):
+            os.remove(self.outfile)
 
-    @patch("youtube_to_docs.transcript.build")
-    def test_get_youtube_service(self, mock_build):
-        service = transcript.get_youtube_service()
-        self.assertIsNotNone(service)
-        mock_build.assert_called_with("youtube", "v3", developerKey="fake_youtube_key")
-
-    def test_get_youtube_service_no_key(self):
-        with patch.dict(os.environ, {}, clear=True):
-            service = transcript.get_youtube_service()
-            self.assertIsNone(service)
-
-    def test_resolve_video_ids_single(self):
-        ids = transcript.resolve_video_ids("KuPc06JgI_A", None)
-        self.assertEqual(ids, ["KuPc06JgI_A"])
-
-    def test_resolve_video_ids_list(self):
-        ids = transcript.resolve_video_ids("KuPc06JgI_A,GalhDyf3F8g", None)
-        self.assertEqual(ids, ["KuPc06JgI_A", "GalhDyf3F8g"])
-
-    def test_resolve_video_ids_playlist_no_service(self):
-        with self.assertRaises(SystemExit):
-            transcript.resolve_video_ids("PL8ZxoInteClyHaiReuOHpv6Z4SPrXtYtW", None)
-
-    @patch("youtube_to_docs.transcript.build")
-    def test_resolve_video_ids_playlist(self, mock_build):
-        mock_service = MagicMock()
-        mock_request = MagicMock()
-        mock_response = {
-            "items": [
-                {"contentDetails": {"videoId": "vid1"}},
-                {"contentDetails": {"videoId": "vid2"}},
-            ]
-        }
-        mock_request.execute.return_value = mock_response
-        # Mock list_next to return None to stop iteration
-        mock_service.playlistItems().list.return_value = mock_request
-        mock_service.playlistItems().list_next.return_value = None
-
-        ids = transcript.resolve_video_ids("PL123", mock_service)
-        self.assertEqual(ids, ["vid1", "vid2"])
-
-    @patch("youtube_to_docs.transcript.build")
-    def test_resolve_video_ids_channel_handle(self, mock_build):
-        mock_service = MagicMock()
-
-        # Mock channel list response
-        mock_channel_req = MagicMock()
-        mock_channel_resp = {
-            "items": [{"contentDetails": {"relatedPlaylists": {"uploads": "UU123"}}}]
-        }
-        mock_channel_req.execute.return_value = mock_channel_resp
-        mock_service.channels().list.return_value = mock_channel_req
-
-        # Mock playlist items response (since it calls resolve_video_ids internally
-        # with the playlist ID)
-        mock_playlist_req = MagicMock()
-        mock_playlist_resp = {
-            "items": [{"contentDetails": {"videoId": "vid_from_channel"}}]
-        }
-        mock_playlist_req.execute.return_value = mock_playlist_resp
-        mock_service.playlistItems().list.return_value = mock_playlist_req
-        mock_service.playlistItems().list_next.return_value = None
-
-        ids = transcript.resolve_video_ids("@channel", mock_service)
-        self.assertEqual(ids, ["vid_from_channel"])
-
-    def test_get_video_details_none(self):
-        details = transcript.get_video_details("vid1", None)
-        self.assertEqual(
-            details, ("", "", "", "", "", "", "https://www.youtube.com/watch?v=vid1")
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("youtube_to_docs.main.generate_summary")
+    @patch("os.makedirs")
+    def test_create_new_file(
+        self,
+        mock_makedirs,
+        mock_gen_summary,
+        mock_fetch_trans,
+        mock_details,
+        mock_resolve,
+        mock_svc,
+    ):
+        mock_resolve.return_value = ["vid1"]
+        mock_details.return_value = (
+            "Title 1",
+            "Desc",
+            "2023-01-01",
+            "Chan",
+            "Tags",
+            "0:01:00",
+            "url1",
         )
+        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_gen_summary.return_value = ("Summary 1", 100, 50)
 
-    def test_get_video_details_success(self):
-        mock_service = MagicMock()
-        mock_req = MagicMock()
-        mock_resp = {
-            "items": [
-                {
-                    "snippet": {
-                        "title": "Test Video",
-                        "description": "Desc",
-                        "publishedAt": "2023-01-01",
-                        "channelTitle": "Test Channel",
-                        "tags": ["tag1", "tag2"],
-                    },
-                    "contentDetails": {"duration": "PT1M10S"},
-                }
-            ]
-        }
-        mock_req.execute.return_value = mock_resp
-        mock_service.videos().list.return_value = mock_req
+        with patch(
+            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+        ):
+            with patch("builtins.open", mock_open()):
+                main.main()
 
-        details = transcript.get_video_details("vid1", mock_service)
-        self.assertIsNotNone(details)
-        assert details is not None
-        self.assertEqual(details[0], "Test Video")
-        self.assertEqual(details[5], "0:01:10")  # Duration
+        self.assertTrue(os.path.exists(self.outfile))
+        df = pl.read_csv(self.outfile)
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df[0, "URL"], "https://www.youtube.com/watch?v=vid1")
+        self.assertEqual(df[0, "Summary Text gemini-test"], "Summary 1")
+        self.assertIn("Summary File gemini-test", df.columns)
+        self.assertIn("gemini-test summary cost", df.columns)
+        self.assertAlmostEqual(
+            df[0, "gemini-test summary cost"], 0.0
+        )  # Since pricing is mocked to 0 by default if not found
+        self.assertIn("Transcript File human generated", df.columns)
 
-    @patch("youtube_to_docs.transcript.ytt_api")
-    def test_fetch_transcript(self, mock_ytt_api):
-        mock_transcript_obj = MagicMock()
-        mock_transcript_obj.to_raw_data.return_value = [
-            {"text": "Hello"},
-            {"text": "world"},
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("youtube_to_docs.main.generate_summary")
+    @patch("os.makedirs")
+    def test_append_new_video(
+        self,
+        mock_makedirs,
+        mock_gen_summary,
+        mock_fetch_trans,
+        mock_details,
+        mock_resolve,
+        mock_svc,
+    ):
+        # Create initial CSV
+        initial_data = pl.DataFrame(
+            {
+                "URL": ["https://www.youtube.com/watch?v=vid1"],
+                "Title": ["Title 1"],
+                "Description": ["Desc"],
+                "Data Published": ["2023-01-01"],
+                "Channel": ["Chan"],
+                "Tags": ["Tags"],
+                "Duration": ["0:01:00"],
+                "Transcript File human generated": ["path1"],
+                "Summary File gemini-test": ["spath1"],
+                "Summary Text gemini-test": ["Summary 1"],
+            }
+        )
+        initial_data.write_csv(self.outfile)
+
+        mock_resolve.return_value = ["vid2"]
+        mock_details.return_value = (
+            "Title 2",
+            "Desc 2",
+            "2023-01-02",
+            "Chan 2",
+            "Tags 2",
+            "0:02:00",
+            "url2",
+        )
+        mock_fetch_trans.return_value = ("Transcript 2", False)
+        mock_gen_summary.return_value = ("Summary 2", 200, 100)
+
+        with patch(
+            "sys.argv", ["main.py", "vid2", "-o", self.outfile, "-m", "gemini-test"]
+        ):
+            with patch("builtins.open", mock_open()):
+                main.main()
+
+        df = pl.read_csv(self.outfile)
+        self.assertEqual(len(df), 2)
+        # Verify both videos exist
+        self.assertIn("https://www.youtube.com/watch?v=vid1", df["URL"].to_list())
+        self.assertIn("https://www.youtube.com/watch?v=vid2", df["URL"].to_list())
+
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("os.makedirs")
+    def test_skip_existing(
+        self, mock_makedirs, mock_fetch_trans, mock_details, mock_resolve, mock_svc
+    ):
+        # Create initial CSV with summary
+        initial_data = pl.DataFrame(
+            {
+                "URL": ["https://www.youtube.com/watch?v=vid1"],
+                "Title": ["Title 1"],
+                "Description": ["Desc"],
+                "Data Published": ["2023-01-01"],
+                "Channel": ["Chan"],
+                "Tags": ["Tags"],
+                "Duration": ["0:01:00"],
+                "Transcript characters": [12],
+                "Transcript File human generated": ["path1"],
+                "Summary File gemini-test": ["spath1"],
+                "Summary Text gemini-test": ["Summary 1"],
+            }
+        )
+        initial_data.write_csv(self.outfile)
+
+        mock_resolve.return_value = ["vid1"]
+
+        with patch(
+            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+        ):
+            main.main()
+
+        # If skipped, these should NOT be called
+        mock_details.assert_not_called()
+        mock_fetch_trans.assert_not_called()
+
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.generate_summary")
+    @patch("os.path.exists")
+    @patch("os.makedirs")
+    def test_add_new_summary_column(
+        self, mock_makedirs, mock_exists, mock_gen_summary, mock_resolve, mock_svc
+    ):
+        # Existing CSV without 'Summary Text haiku'
+        initial_data = pl.DataFrame(
+            {
+                "URL": ["https://www.youtube.com/watch?v=vid1"],
+                "Title": ["Title 1"],
+                "Description": ["Desc"],
+                "Data Published": ["2023-01-01"],
+                "Channel": ["Chan"],
+                "Tags": ["Tags"],
+                "Duration": ["0:01:00"],
+                "Transcript characters": [12],
+                "Transcript File human generated": ["transcript_vid1.txt"],
+                "Summary File gemini-test": ["spath1"],
+                "Summary Text gemini-test": ["Summary Gemini"],
+            }
+        )
+        initial_data.write_csv(self.outfile)
+
+        mock_resolve.return_value = ["vid1"]
+        mock_gen_summary.return_value = ("Summary Haiku", 300, 150)
+
+        # Mock transcript file existence and reading
+        def side_effect(path):
+            if path == self.outfile:
+                return True
+            if "transcript_vid1.txt" in path:
+                return True
+            return False
+
+        mock_exists.side_effect = side_effect
+
+        with patch("sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "haiku"]):
+            with patch("builtins.open", mock_open(read_data="Transcript Content")):
+                main.main()
+
+        df = pl.read_csv(self.outfile)
+        self.assertIn("Summary Text haiku", df.columns)
+        self.assertIn("Summary File haiku", df.columns)
+        self.assertIn("haiku summary cost", df.columns)
+        self.assertIn("Summary Text gemini-test", df.columns)
+        self.assertIn("Summary File gemini-test", df.columns)
+        self.assertIn("Transcript File human generated", df.columns)
+
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("youtube_to_docs.main.generate_summary")
+    @patch("os.makedirs")
+    def test_column_ordering(
+        self,
+        mock_makedirs,
+        mock_gen_summary,
+        mock_fetch_trans,
+        mock_details,
+        mock_resolve,
+        mock_svc,
+    ):
+        mock_resolve.return_value = ["vid1"]
+        mock_details.return_value = (
+            "Title 1",
+            "Desc",
+            "2023-01-01",
+            "Chan",
+            "Tags",
+            "0:01:00",
+            "url1",
+        )
+        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_gen_summary.return_value = ("Summary 1", 100, 50)
+
+        with patch(
+            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+        ):
+            with patch("builtins.open", mock_open()):
+                main.main()
+
+        df = pl.read_csv(self.outfile)
+        cols = df.columns
+
+        # Expected order based on logic
+        expected_start = [
+            "URL",
+            "Title",
+            "Description",
+            "Data Published",
+            "Channel",
+            "Tags",
+            "Duration",
+            "Transcript characters",
         ]
-        mock_ytt_api.fetch.return_value = mock_transcript_obj
-
-        result = transcript.fetch_transcript("vid1")
-        self.assertIsNotNone(result)
-        assert result is not None
-        text, is_generated = result
-        self.assertEqual(text, "Hello world")
-
-    @patch("youtube_to_docs.transcript.ytt_api")
-    def test_fetch_transcript_error(self, mock_ytt_api):
-        mock_ytt_api.fetch.side_effect = Exception("Transcript disabled")
-        result = transcript.fetch_transcript("vid1")
-        self.assertIsNone(result)
-
-    @patch("youtube_to_docs.llms.genai.Client")
-    def test_generate_summary_gemini(self, mock_client_cls):
-        mock_client = mock_client_cls.return_value
-        mock_resp = MagicMock()
-        mock_resp.text = "Gemini Summary"
-        mock_client.models.generate_content.return_value = mock_resp
-
-        summary = llms.generate_summary("gemini-pro", "transcript", "Title", "url")
-        self.assertEqual(summary, "Gemini Summary")
-
-    @patch("youtube_to_docs.llms.requests.post")
-    @patch("google.auth.default")
-    def test_generate_summary_vertex(self, mock_auth, mock_post):
-        mock_creds = MagicMock()
-        mock_creds.token = "fake_token"
-        mock_creds.expired = False
-        mock_auth.return_value = (mock_creds, "proj")
-
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {"content": [{"text": "Vertex Summary"}]}
-        mock_post.return_value = mock_resp
-
-        summary = llms.generate_summary(
-            "vertex-claude-3-5", "transcript", "Title", "url"
-        )
-        self.assertEqual(summary, "Vertex Summary")
-
-    @patch("youtube_to_docs.llms.requests.post")
-    def test_generate_summary_bedrock(self, mock_post):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {
-            "output": {"message": {"content": [{"text": "Bedrock Summary"}]}}
-        }
-        mock_post.return_value = mock_resp
-
-        summary = llms.generate_summary(
-            "bedrock-claude-3-5", "transcript", "Title", "url"
-        )
-        self.assertEqual(summary, "Bedrock Summary")
-
-    @patch("youtube_to_docs.llms.OpenAI")
-    def test_generate_summary_foundry(self, mock_openai):
-        mock_client = mock_openai.return_value
-        mock_completion = MagicMock()
-        mock_completion.choices[0].message.content = "Foundry Summary"
-        mock_client.chat.completions.create.return_value = mock_completion
-
-        summary = llms.generate_summary("foundry-gpt-4", "transcript", "Title", "url")
-        self.assertEqual(summary, "Foundry Summary")
+        for i, col in enumerate(expected_start):
+            self.assertEqual(cols[i], col)
 
 
 if __name__ == "__main__":

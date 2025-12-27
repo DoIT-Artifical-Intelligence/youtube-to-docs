@@ -31,7 +31,7 @@ from typing import List, Optional
 
 import polars as pl
 
-from youtube_to_docs.llms import generate_summary
+from youtube_to_docs.llms import generate_summary, get_model_pricing
 from youtube_to_docs.transcript import (
     fetch_transcript,
     get_video_details,
@@ -64,6 +64,10 @@ def reorder_columns(df: pl.DataFrame) -> pl.DataFrame:
     # Add Summary File columns
     summary_files = [c for c in cols if c.startswith("Summary File ")]
     final_order.extend(sorted(summary_files))
+
+    # Add Summary Cost columns
+    summary_costs = [c for c in cols if c.endswith(" summary cost ($)")]
+    final_order.extend(sorted(summary_costs))
 
     # Add Summary Text columns
     summary_texts = [c for c in cols if c.startswith("Summary Text ")]
@@ -152,6 +156,9 @@ def main() -> None:
     summary_col_name = f"Summary Text {model_name}" if model_name else "Summary Text"
     summary_file_col_name = (
         f"Summary File {model_name}" if model_name else "Summary File"
+    )
+    summary_cost_col_name = (
+        f"{model_name} summary cost ($)" if model_name else "summary cost ($)"
     )
 
     for video_id in video_ids:
@@ -264,7 +271,18 @@ def main() -> None:
 
         if needs_summary:
             print(f"Summarizing using model: {model_name}")
-            summary_text = generate_summary(model_name, transcript, video_title, url)
+            summary_text, input_tokens, output_tokens = generate_summary(
+                model_name, transcript, video_title, url
+            )
+
+            summary_cost = float("nan")
+            if model_name:
+                input_price, output_price = get_model_pricing(model_name)
+                if input_price is not None and output_price is not None:
+                    summary_cost = (input_tokens / 1_000_000) * input_price + (
+                        output_tokens / 1_000_000
+                    ) * output_price
+                    print(f"Summary cost: ${summary_cost:.6f}")
 
             if summaries_dir and summary_text:
                 safe_title = (
@@ -304,6 +322,9 @@ def main() -> None:
                 transcript_col_name: transcript_full_path,
                 summary_file_col_name: summary_full_path,
                 summary_col_name: summary_text,
+                summary_cost_col_name: summary_cost
+                if needs_summary
+                else row.get(summary_cost_col_name, float("nan")),
             }
         )
         rows.append(row)
