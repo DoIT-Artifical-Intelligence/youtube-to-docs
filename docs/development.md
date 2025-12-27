@@ -42,7 +42,7 @@ We use `pytest` for testing.
 To run tests with all dependencies automatically handled:
 
 ```bash
-uv run --with-requirements requirements.txt pytest
+uv run --group test pytest
 ```
 
 ## Utilities
