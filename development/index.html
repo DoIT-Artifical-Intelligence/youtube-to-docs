@@ -1094,6 +1094,8 @@
 <p>To build and deploy in one command (requires <code>.pypirc</code> configuration):
 <div class="language-powershell highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">Remove-Item</span> <span class="n">-Recurse</span> <span class="n">-Force</span> <span class="n">dist</span><span class="p">;</span> <span class="n">uv</span> <span class="n">tool</span> <span class="n">run</span> <span class="p">-</span><span class="n">-from</span> <span class="n">build</span> <span class="n">pyproject-build</span><span class="p">;</span> <span class="n">uv</span> <span class="n">tool</span> <span class="n">run</span> <span class="n">twine</span> <span class="n">upload</span> <span class="n">dist</span><span class="p">/*</span>
 </code></pre></div></p>
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>rm<span class="w"> </span>-rf<span class="w"> </span>dist<span class="p">;</span><span class="w"> </span>uv<span class="w"> </span>tool<span class="w"> </span>run<span class="w"> </span>--from<span class="w"> </span>build<span class="w"> </span>pyproject-build<span class="p">;</span><span class="w"> </span>uv<span class="w"> </span>tool<span class="w"> </span>run<span class="w"> </span>twine<span class="w"> </span>upload<span class="w"> </span>dist/*
+</code></pre></div>
 <h2 id="continuous-deployment">Continuous Deployment</h2>
 <p>A manual GitHub Action is available to automate this process. </p>
 <ol>
