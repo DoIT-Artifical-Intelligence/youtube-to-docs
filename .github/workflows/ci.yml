@@ -19,11 +19,8 @@ jobs:
     - name: Set up Python
       run: uv python install
 
-    - name: Create virtual environment
-      run: uv venv
-
     - name: Install dependencies
-      run: uv pip install -r requirements.txt
+      run: uv sync --group test
 
     - name: Ruff Lint
       run: uv tool run ruff check .
@@ -35,4 +32,4 @@ jobs:
       run: uv tool run ty check
 
     - name: Run Tests
-      run: uv run --with-requirements requirements.txt pytest
+      run: uv run pytest
