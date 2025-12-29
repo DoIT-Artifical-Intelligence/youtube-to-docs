@@ -482,6 +482,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#csv-column-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSV Column Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSV Column Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#base-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-outputs-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI Outputs &amp; Costs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#speaker-extraction" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -653,6 +703,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#csv-column-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSV Column Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSV Column Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#base-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-outputs-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI Outputs &amp; Costs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#speaker-extraction" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -757,15 +857,49 @@
 </tbody>
 </table>
 <h3 id="examples">Examples</h3>
-<p><strong>1. Process the default video and save to a custom CSV:</strong>
-<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>youtube-to-docs<span class="w"> </span>-o<span class="w"> </span>my-docs.csv
+<p><strong>1. Summarize the default video using a single model:</strong>
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>youtube-to-docs<span class="w"> </span>-m<span class="w"> </span>gemini-3-flash-preview
 </code></pre></div></p>
-<p><strong>2. Summarize a Playlist using multiple models (Gemini and Vertex):</strong>
-<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>youtube-to-docs<span class="w"> </span>PLGKTTEqwhiHHWO-jdxM1KtzTbWo6h0Ycl<span class="w"> </span>-m<span class="w"> </span>gemini-3-flash-preview,vertex-claude-haiku-4-5@20251001
+<p><strong>2. Process the default video and save to a custom CSV:</strong>
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>youtube-to-docs<span class="w"> </span>-o<span class="w"> </span>my-docs.csv
 </code></pre></div></p>
-<p><strong>3. Process a Channel with Summaries, TTS, and Infographics:</strong>
-<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>youtube-to-docs<span class="w"> </span>@mga-othercommittees6625<span class="w"> </span>-m<span class="w"> </span>vertex-claude-haiku-4-5@20251001<span class="w"> </span>--tts<span class="w"> </span>gemini-2.5-flash-preview-tts-Kore<span class="w"> </span>--infographic<span class="w"> </span>gemini-2.5-flash-image
+<p><strong>3. Summarize a Playlist using multiple models (Gemini and Vertex):</strong>
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>youtube-to-docs<span class="w"> </span>PLGKTTEqwhiHHWO-jdxM1KtzTbWo6h0Ycl<span class="w"> </span>-m<span class="w"> </span>gemini-3-flash-preview,vertex-claude-haiku-4-5@20251001
 </code></pre></div></p>
+<p><strong>4. Process a Channel with Summaries, TTS, and Infographics:</strong>
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>youtube-to-docs<span class="w"> </span>@mga-othercommittees6625<span class="w"> </span>-m<span class="w"> </span>vertex-claude-haiku-4-5@20251001<span class="w"> </span>--tts<span class="w"> </span>gemini-2.5-flash-preview-tts-Kore<span class="w"> </span>--infographic<span class="w"> </span>gemini-2.5-flash-image
+</code></pre></div></p>
+<h2 id="csv-column-reference">CSV Column Reference</h2>
+<p>The output CSV file contains a variety of columns depending on the arguments provided. Below is a reference of the possible columns:</p>
+<h3 id="base-metadata">Base Metadata</h3>
+<ul>
+<li><strong>URL</strong>: The full YouTube video URL.</li>
+<li><strong>Title</strong>: The title of the video.</li>
+<li><strong>Description</strong>: The video description.</li>
+<li><strong>Data Published</strong>: The date the video was published.</li>
+<li><strong>Channel</strong>: The name of the YouTube channel.</li>
+<li><strong>Tags</strong>: Video tags (comma-separated).</li>
+<li><strong>Duration</strong>: The duration of the video.</li>
+<li><strong>Transcript characters</strong>: The total number of characters in the transcript.</li>
+</ul>
+<h3 id="files">Files</h3>
+<ul>
+<li><strong>Transcript File {type}</strong>: Path to the saved transcript file. <code>{type}</code> is either <code>youtube generated</code> or <code>human generated</code>.</li>
+<li><strong>Speakers File {model}</strong>: Path to the saved speaker extraction text file.</li>
+<li><strong>Summary File {model}</strong>: Path to the Markdown summary file generated by a specific model.</li>
+<li><strong>Summary Infographic File {model} {infographic_model}</strong>: Path to the generated infographic image.</li>
+<li><strong>Summary Audio File {model} {tts_model} File</strong>: Path to the generated TTS audio file.</li>
+</ul>
+<h3 id="ai-outputs-costs">AI Outputs &amp; Costs</h3>
+<ul>
+<li><strong>Speakers {model}</strong>: The extracted list of speakers and their roles.</li>
+<li><strong>{normalized_model} Speaker extraction cost ($)</strong>: The estimated API cost for speaker extraction.</li>
+<li><strong>Summary Text {model}</strong>: The full text of the summary (also saved to the summary file).</li>
+<li><strong>{normalized_model} summary cost ($)</strong>: The total estimated API cost for both speaker extraction and summarization.</li>
+</ul>
+<blockquote>
+<p><strong>Note</strong>: <code>{normalized_model}</code> refers to the model name with prefixes (like <code>vertex-</code>) and date suffixes removed for cleaner column headers.</p>
+</blockquote>
 <h2 id="speaker-extraction">Speaker Extraction</h2>
 <p>When a model is specified using the <code>-m</code> or <code>--model</code> argument, the tool automatically performs speaker extraction before generating a summary.</p>
 <ul>
@@ -776,10 +910,10 @@
 </ul>
 <h2 id="library-usage">Library Usage</h2>
 <p>While primarily a CLI, you can import core functions for custom workflows.</p>
-<div class="language-python highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">youtube_to_docs.transcript</span><span class="w"> </span><span class="kn">import</span> <span class="n">fetch_transcript</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">video_id</span> <span class="o">=</span> <span class="s2">&quot;atmGAHYpf_c&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">transcript</span><span class="p">,</span> <span class="n">is_generated</span> <span class="o">=</span> <span class="n">fetch_transcript</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">youtube_to_docs.transcript</span><span class="w"> </span><span class="kn">import</span> <span class="n">fetch_transcript</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">video_id</span> <span class="o">=</span> <span class="s2">&quot;atmGAHYpf_c&quot;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">transcript</span><span class="p">,</span> <span class="n">is_generated</span> <span class="o">=</span> <span class="n">fetch_transcript</span><span class="p">(</span><span class="n">video_id</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="why-use-youtube-to-docs">Why use <code>youtube-to-docs</code>?</h2>
 <p>You might find other tools that download YouTube transcripts, but <code>youtube-to-docs</code> distinguishes itself in several ways:</p>
