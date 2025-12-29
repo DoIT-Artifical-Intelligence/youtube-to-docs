@@ -71,9 +71,7 @@ def reorder_columns(df: pl.DataFrame) -> pl.DataFrame:
     final_order.extend(sorted(speakers))
 
     # Add Speaker Extraction Cost columns
-    speaker_costs = [
-        c for c in cols if c.endswith(" Speaker extraction cost ($)")
-    ]
+    speaker_costs = [c for c in cols if c.endswith(" Speaker extraction cost ($)")]
     final_order.extend(sorted(speaker_costs))
 
     # Add Summary Text columns
@@ -383,7 +381,7 @@ def main() -> None:
             if speakers_col_name in row and row[speakers_col_name]:
                 speakers_text = row[speakers_col_name]
                 # If we have text but no cost, we can't easily recalculate exact tokens
-                # without re-running token counting, but we can estimate or leave as NaN.
+                # without re-running counting, but we can estimate or leave as NaN.
                 # If we are backfilling cost, we will handle it below.
             else:
                 print(f"Extracting speakers using model: {model_name}")
@@ -428,12 +426,10 @@ def main() -> None:
                             est_output_tokens / 1_000_000
                         ) * output_price
 
-                        # Add speaker cost if we just generated them or if we can backfill it
+                        # Add speaker cost if we just generated them or can backfill it
                         # If we just generated it, speakers_input > 0
                         if speakers_input > 0 or speakers_output > 0:
-                            s_cost = (
-                                speakers_input / 1_000_000
-                            ) * input_price + (
+                            s_cost = (speakers_input / 1_000_000) * input_price + (
                                 speakers_output / 1_000_000
                             ) * output_price
                             summary_cost += s_cost
@@ -441,8 +437,8 @@ def main() -> None:
                             isinstance(row[speaker_cost_col_name], float)
                             and row[speaker_cost_col_name] != row[speaker_cost_col_name]
                         ):
-                             summary_cost += row[speaker_cost_col_name]
-                        
+                            summary_cost += row[speaker_cost_col_name]
+
                         summary_cost = round(summary_cost, 2)
                         row[summary_cost_col_name] = summary_cost
                         print(f"Estimated summary cost: ${summary_cost:.2f}")
@@ -482,7 +478,6 @@ def main() -> None:
 
                 # If we calculated speaker cost earlier, make sure it's in the row
                 # (it was added above)
-
 
             summary_full_path = ""
             if summaries_dir and summary_text:
