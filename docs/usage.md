@@ -47,16 +47,9 @@ While primarily a CLI, you can import core functions for custom workflows.
 
 ```python
 from youtube_to_docs.transcript import fetch_transcript
-from youtube_to_docs.llms import generate_summary
 
-# Fetch a transcript
 video_id = "atmGAHYpf_c"
 transcript, is_generated = fetch_transcript(video_id)
-print(f"Transcript (Generated: {is_generated}):\n{transcript[:100]}...")
-
-# Generate a summary (requires API key setup)
-# Note: This is a simplified example; you might need to handle context/config
-# summary_text, in_tokens, out_tokens = generate_summary("gemini-1.5-flash", transcript, "Video Title", "http://url...")
 ```
 
 ## Why use `youtube-to-docs`?
