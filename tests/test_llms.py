@@ -162,10 +162,6 @@ class TestQAProcessing(unittest.TestCase):
             "|---|---|---|---|---|\n"
             "| 1 | Me | Q1 | You | A1 |"
         )
-        # Note: The data row logic in my implementation checks
-        # `if stripped_line.startswith("|")`.
-        # If input is "Me | ...", it goes to else block: `if "|" in stripped_line`.
-        # Then it does `new_lines.append(f"| {question_counter} | {stripped_line}")`
 
         self.assertEqual(llms.add_question_numbers(input_table), expected)
 
