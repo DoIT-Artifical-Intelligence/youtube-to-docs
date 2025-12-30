@@ -4,7 +4,7 @@
   "description": "Extracts transcripts, summaries, and more from YouTube videos.",
   "version": "1.0.0",
   "mcpServers": {
-    "default": {
+    "youtube-to-docs": {
       "command": "uv",
       "args": ["run", "python", "-m", "youtube_to_docs.mcp_server"]
     }
