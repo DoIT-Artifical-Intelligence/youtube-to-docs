@@ -789,6 +789,14 @@
 <li>The prompt includes the video title and the generated summary text to ensure relevance.</li>
 </ul>
 </li>
+<li>
+<p><strong>Video Generation</strong>:</p>
+<ul>
+<li>Combines the generated infographic (visual) and TTS audio (sound) into a single MP4 video file.</li>
+<li>Uses <code>static-ffmpeg</code> to perform the merging, ensuring no external FFmpeg installation is required.</li>
+<li>This provides a shareable "video summary" format.</li>
+</ul>
+</li>
 </ul>
 <h3 id="6-cost-tracking">6. Cost Tracking</h3>
 <p>The system includes a pricing engine (<code>youtube_to_docs/prices.py</code>) that tracks token usage for every API call.
