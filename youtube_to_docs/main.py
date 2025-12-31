@@ -596,7 +596,8 @@ def main() -> None:
                             audio_input_path = local_download_path
                         else:
                             print(
-                                f"Error: Audio file not found for STT: {audio_file_path}"
+                                "Error: Audio file not found for STT: "
+                                f"{audio_file_path}"
                             )
                     else:
                         print(
