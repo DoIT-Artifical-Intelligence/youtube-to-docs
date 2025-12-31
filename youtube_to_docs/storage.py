@@ -11,7 +11,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload, MediaIoBaseDownload
 
 
 class Storage(ABC):
@@ -242,6 +242,9 @@ class GoogleDriveStorage(Storage):
         return parent_id
 
     def _get_file_id(self, path: str) -> Optional[str]:
+        if path in self.file_cache:
+            return self.file_cache[path]
+
         # See if we can find the file given the path structure
         # path is like "summary-files/my-video.txt"
         parent_id = self._get_parent_id(path)
@@ -260,6 +263,7 @@ class GoogleDriveStorage(Storage):
         )
         files = results.get("files", [])
         if files:
+            self.file_cache[path] = files[0]["id"]
             return files[0]["id"]
         return None
 
@@ -305,7 +309,6 @@ class GoogleDriveStorage(Storage):
             # But we are in read_text
             request = self.service.files().get_media(fileId=file_id)
             fh = io.BytesIO()
-            from googleapiclient.http import MediaIoBaseDownload
 
             downloader = MediaIoBaseDownload(fh, request)
             done = False
@@ -324,7 +327,6 @@ class GoogleDriveStorage(Storage):
 
         request = self.service.files().get_media(fileId=file_id)
         fh = io.BytesIO()
-        from googleapiclient.http import MediaIoBaseDownload
 
         downloader = MediaIoBaseDownload(fh, request)
         done = False
@@ -385,6 +387,8 @@ class GoogleDriveStorage(Storage):
         mime_type = "application/octet-stream"
         if filename.endswith(".wav"):
             mime_type = "audio/wav"
+        elif filename.endswith(".png"):
+            mime_type = "image/png"
         media = MediaIoBaseUpload(fh, mimetype=mime_type, resumable=True)
 
         if existing_id:

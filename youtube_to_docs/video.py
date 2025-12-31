@@ -128,8 +128,9 @@ def process_videos(
 
                 # Download files to temp dir
                 local_info_path = os.path.join(temp_dir, "input_image.png")
-                # Assuming wav or m4a, ffmpeg handles it
-                local_audio_path = os.path.join(temp_dir, "input_audio.wav")
+                # Preserve extension or default to .m4a if unknown
+                ext = os.path.splitext(audio_path_remote)[1] or ".m4a"
+                local_audio_path = os.path.join(temp_dir, f"input_audio{ext}")
                 local_video_path = os.path.join(temp_dir, "output_video.mp4")
 
                 try:

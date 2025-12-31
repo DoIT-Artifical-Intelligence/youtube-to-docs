@@ -581,10 +581,23 @@ def main() -> None:
                         audio_input_path = audio_file_path
 
                     if not audio_input_path:
-                        print(
-                            "Error: Local audio file not available for STT. "
-                            "(Drive download not yet implemented for STT)"
-                        )
+                        if audio_file_path and storage.exists(audio_file_path):
+                            print(
+                                "Downloading audio from storage for STT: "
+                                f"{audio_file_path}"
+                            )
+                            # Ensure local_audio_dir exists or use a tempfile
+                            local_download_path = os.path.join(
+                                local_audio_dir, f"{video_id}.m4a"
+                            )
+                            audio_data = storage.read_bytes(audio_file_path)
+                            with open(local_download_path, "wb") as f:
+                                f.write(audio_data)
+                            audio_input_path = local_download_path
+                        else:
+                            print(
+                                f"Error: Audio file not found for STT: {audio_file_path}"
+                            )
                     else:
                         print(
                             f"Generating transcript using model: {transcript_arg} "
