@@ -74,19 +74,12 @@ class Storage(ABC):
             self, path: str, download_dir: Optional[str] = None
         ) -> Optional[str]:
             """
-
             Ensures the file is available locally.
-
             If it's already local, returns the path.
-
             If it's remote, downloads it to download_dir (or a temp file) and returns
-
             the path.
-
             Returns None if retrieval fails.
-
             """
-
             pass
 
 
@@ -512,41 +505,64 @@ class GoogleDriveStorage(Storage):
                 )
                 .execute()
             )
-            # Freeze the first row and first two columns for new sheets
-            try:
-                spreadsheet_id = file.get("id")
-                # Fetch the spreadsheet to get the actual sheetId of the first sheet
-                spreadsheet = (
-                    self.sheets_service.spreadsheets()
-                    .get(spreadsheetId=spreadsheet_id)
-                    .execute()
-                )
-                sheets = spreadsheet.get("sheets", [])
-                if sheets:
-                    first_sheet_id = sheets[0].get("properties", {}).get("sheetId")
-                    if first_sheet_id is not None:
-                        requests = [
+
+        # Update sheet properties (freeze header and ensure min rows)
+        try:
+            spreadsheet_id = file.get("id")
+            # Fetch the spreadsheet to get the actual sheetId of the first sheet
+            spreadsheet = (
+                self.sheets_service.spreadsheets()
+                .get(spreadsheetId=spreadsheet_id)
+                .execute()
+            )
+            sheets = spreadsheet.get("sheets", [])
+            if sheets:
+                sheet = sheets[0]
+                sheet_id = sheet.get("properties", {}).get("sheetId")
+                grid_props = sheet.get("properties", {}).get("gridProperties", {})
+                current_rows = grid_props.get("rowCount", 0)
+
+                if sheet_id is not None:
+                    requests = []
+                    # Freeze rows/cols
+                    requests.append(
+                        {
+                            "updateSheetProperties": {
+                                "properties": {
+                                    "sheetId": sheet_id,
+                                    "gridProperties": {
+                                        "frozenRowCount": 1,
+                                        "frozenColumnCount": 2,
+                                    },
+                                },
+                                "fields": (
+                                    "gridProperties(frozenRowCount,frozenColumnCount)"
+                                ),
+                            }
+                        }
+                    )
+
+                    # Ensure minimum rows (1000) for better UX
+                    if current_rows < 1000:
+                        requests.append(
                             {
                                 "updateSheetProperties": {
                                     "properties": {
-                                        "sheetId": first_sheet_id,
+                                        "sheetId": sheet_id,
                                         "gridProperties": {
-                                            "frozenRowCount": 1,
-                                            "frozenColumnCount": 2,
+                                            "rowCount": 1000,
                                         },
                                     },
-                                    "fields": (
-                                        "gridProperties(frozenRowCount,"
-                                        "frozenColumnCount)"
-                                    ),
+                                    "fields": "gridProperties(rowCount)",
                                 }
                             }
-                        ]
-                        self.sheets_service.spreadsheets().batchUpdate(
-                            spreadsheetId=spreadsheet_id, body={"requests": requests}
-                        ).execute()
-            except Exception as e:
-                print(f"Warning: Could not freeze header row/columns: {e}")
+                        )
+
+                    self.sheets_service.spreadsheets().batchUpdate(
+                        spreadsheetId=spreadsheet_id, body={"requests": requests}
+                    ).execute()
+        except Exception as e:
+            print(f"Warning: Could not update sheet properties: {e}")
 
         # Update cache
         if file.get("id"):
