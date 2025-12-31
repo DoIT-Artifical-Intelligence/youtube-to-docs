@@ -1,17 +1,21 @@
-import argparse
 import os
 import subprocess
+import tempfile
 
 import polars as pl
 from static_ffmpeg import run
 
-from youtube_to_docs.main import reorder_columns
+from youtube_to_docs.storage import Storage
 
 
 def create_video(image_path: str, audio_path: str, output_path: str) -> bool:
     """Creates an MP4 video from an image and an audio file using ffmpeg."""
     # Use static_ffmpeg to ensure ffmpeg is available
-    ffmpeg_path, _ = run.get_or_fetch_platform_executables_else_raise()
+    try:
+        ffmpeg_path, _ = run.get_or_fetch_platform_executables_else_raise()
+    except Exception as e:
+        print(f"Error fetching ffmpeg: {e}")
+        return False
 
     command = [
         ffmpeg_path,
@@ -47,22 +51,14 @@ def create_video(image_path: str, audio_path: str, output_path: str) -> bool:
         return False
 
 
-def process_videos(csv_path: str) -> None:
-    """Processes the CSV to create videos from infographics and audio files."""
-    if not os.path.exists(csv_path):
-        print(f"Error: CSV file not found at {csv_path}")
-        return
+def process_videos(
+    df: pl.DataFrame, storage: Storage, base_dir: str = "."
+) -> pl.DataFrame:
+    """Processes the DataFrame to create videos from infographics and audio files."""
 
-    try:
-        df = pl.read_csv(csv_path)
-    except Exception as e:
-        print(f"Error reading CSV {csv_path}: {e}")
-        return
-
-    # Setup Video Directory
-    base_dir = os.path.dirname(csv_path) if os.path.dirname(csv_path) else "."
+    # Setup Video Directory in Storage
     video_dir = os.path.join(base_dir, "video-files")
-    os.makedirs(video_dir, exist_ok=True)
+    storage.ensure_directory(video_dir)
 
     # Identify relevant columns
     info_cols = [c for c in df.columns if c.startswith("Summary Infographic File ")]
@@ -70,49 +66,120 @@ def process_videos(csv_path: str) -> None:
 
     if not info_cols or not audio_cols:
         print("Required columns (infographic and audio) not found in CSV.")
-        return
+        return df
 
     video_files = []
 
-    for row in df.iter_rows(named=True):
-        infographics = [
-            row[c]
-            for c in info_cols
-            if row[c] and isinstance(row[c], str) and os.path.exists(row[c])
-        ]
-        audios = [
-            row[c]
-            for c in audio_cols
-            if row[c] and isinstance(row[c], str) and os.path.exists(row[c])
-        ]
+    # Create a temporary directory for local processing (download/ffmpeg)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        print(f"Using temporary directory for video processing: {temp_dir}")
 
-        if len(infographics) == 1 and len(audios) == 1:
-            info_path = infographics[0]
-            audio_path = audios[0]
+        for row in df.iter_rows(named=True):
+            # Find valid infographics and audios for this row
+            infographics = []
+            for c in info_cols:
+                path = row.get(c)
+                if path and isinstance(path, str) and storage.exists(path):
+                    infographics.append(path)
 
-            # Generate output filename based on audio filename
-            audio_basename = os.path.basename(audio_path)
-            video_filename = os.path.splitext(audio_basename)[0] + ".mp4"
-            video_path = os.path.abspath(os.path.join(video_dir, video_filename))
+            audios = []
+            for c in audio_cols:
+                path = row.get(c)
+                if path and isinstance(path, str) and storage.exists(path):
+                    audios.append(path)
 
-            if os.path.exists(video_path) and os.path.getsize(video_path) > 0:
-                print(f"Video already exists: {video_filename}")
-                video_files.append(video_path)
-            else:
-                print(f"Creating video: {video_filename}")
-                if create_video(info_path, audio_path, video_path):
-                    print(f"Successfully created: {video_filename}")
-                    video_files.append(video_path)
+            if len(infographics) == 1 and len(audios) == 1:
+                info_path_remote = infographics[0]
+                audio_path_remote = audios[0]
+
+                # Determine output filename
+                # Use audio filename as base, but ensure it ends in .mp4
+                # We need to handle if audio_path_remote is a URL or path
+                if audio_path_remote.startswith("http"):
+                    # Try to extract video ID from URL
+                    video_id = None
+                    if "URL" in row and row["URL"]:
+                        import re
+
+                        match = re.search(r"v=([a-zA-Z0-9_-]+)", row["URL"])
+                        if match:
+                            video_id = match.group(1)
+
+                    if video_id:
+                        video_filename = f"{video_id}.mp4"
+                    elif "Title" in row and row["Title"]:
+                        safe_title = "".join(
+                            [c if c.isalnum() else "_" for c in row["Title"]]
+                        )
+                        video_filename = f"{safe_title}.mp4"
+                    else:
+                        import uuid
+
+                        video_filename = f"video_{uuid.uuid4()}.mp4"
                 else:
+                    audio_basename = os.path.basename(audio_path_remote)
+                    video_filename = os.path.splitext(audio_basename)[0] + ".mp4"
+
+                target_video_path = os.path.join(video_dir, video_filename)
+
+                # Check if video already exists in storage
+                if storage.exists(target_video_path):
+                    # If we can get a full path/link, use it
+                    if hasattr(storage, "get_full_path"):
+                        video_files.append(storage.get_full_path(target_video_path))
+                    else:
+                        video_files.append(target_video_path)
+                    print(f"Video already exists: {video_filename}")
+                    continue
+
+                print(f"Creating video: {video_filename}")
+
+                # Download files to temp dir
+                local_info_path = os.path.join(temp_dir, "input_image.png")
+                # Preserve extension or default to .m4a if unknown
+                ext = os.path.splitext(audio_path_remote)[1] or ".m4a"
+                local_audio_path = os.path.join(temp_dir, f"input_audio{ext}")
+                local_video_path = os.path.join(temp_dir, "output_video.mp4")
+
+                try:
+                    # Download Infographic
+                    info_bytes = storage.read_bytes(info_path_remote)
+                    with open(local_info_path, "wb") as f:
+                        f.write(info_bytes)
+
+                    # Download Audio
+                    audio_bytes = storage.read_bytes(audio_path_remote)
+                    with open(local_audio_path, "wb") as f:
+                        f.write(audio_bytes)
+
+                    # Create Video
+                    if create_video(
+                        local_info_path, local_audio_path, local_video_path
+                    ):
+                        # Upload Video
+                        # We can use storage.upload_file if we have a path,
+                        # but storage.upload_file expects a local path.
+                        uploaded_link = storage.upload_file(
+                            local_video_path,
+                            target_video_path,
+                            content_type="video/mp4",
+                        )
+                        print(f"Successfully created and uploaded: {video_filename}")
+                        video_files.append(uploaded_link)
+                    else:
+                        video_files.append(None)
+                except Exception as e:
+                    print(f"Error processing video for row: {e}")
                     video_files.append(None)
-        else:
-            if len(infographics) > 1 or len(audios) > 1:
-                print(
-                    f"Skipping row for {row.get('Title', 'Unknown')}: "
-                    f"Multiple infographics ({len(infographics)}) or "
-                    f"audios ({len(audios)}) found."
-                )
-            video_files.append(None)
+
+            else:
+                if len(infographics) > 1 or len(audios) > 1:
+                    print(
+                        f"Skipping row for {row.get('Title', 'Unknown')}: "
+                        f"Multiple infographics ({len(infographics)}) or "
+                        f"audios ({len(audios)}) found. Ambiguous."
+                    )
+                video_files.append(None)
 
     # Add back to the dataframe
     if "Video File" in df.columns:
@@ -126,26 +193,4 @@ def process_videos(csv_path: str) -> None:
     else:
         df = df.with_columns(pl.Series(name="Video File", values=video_files))
 
-    # Save CSV
-    df = reorder_columns(df)
-    df.write_csv(csv_path)
-    print(f"Updated {csv_path} with Video File column.")
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Combine infographics and audio into MP4 videos."
-    )
-    parser.add_argument(
-        "-o",
-        "--outfile",
-        default="youtube-to-docs-artifacts/youtube-docs.csv",
-        help="Path to the CSV file to process.",
-    )
-
-    args = parser.parse_args()
-    process_videos(args.outfile)
-
-
-if __name__ == "__main__":
-    main()
+    return df

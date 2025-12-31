@@ -1,6 +1,6 @@
 import os
 import unittest
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import polars as pl
 
@@ -69,20 +69,10 @@ class TestTTS(unittest.TestCase):
         # Verify
         self.assertEqual(audio_data, b"")
 
-    @patch("youtube_to_docs.tts.wave_file")
     @patch("youtube_to_docs.tts.generate_speech")
-    @patch("os.path.exists")
-    @patch("os.path.getsize")
-    @patch("os.makedirs")
-    @patch("builtins.open", new_callable=mock_open, read_data="Summary text")
     def test_process_tts(
         self,
-        mock_open,
-        mock_makedirs,
-        mock_getsize,
-        mock_exists,
         mock_generate_speech,
-        mock_wave_file,
     ):
         # Setup DataFrame
         df = pl.DataFrame(
@@ -92,34 +82,38 @@ class TestTTS(unittest.TestCase):
             }
         )
 
-        # Setup Mocks
-        # Default behavior for os.path.exists:
-        # 1. Summary file check (True)
-        # 2. Audio file check (False - needs generation)
-        # 3. Summary file check (True)
-        # 4. Audio file check (True - already exists)
+        # Setup Mock Storage
+        mock_storage = MagicMock()
 
-        # However, it's called multiple times.
-        # Let's verify by logic:
-        # Row 1: summary exists? -> True. audio exists? -> False. -> generate.
-        # Row 2: summary exists? -> True. audio exists? -> True. -> skip.
+        # storage.exists behavior:
+        # 1. target_path check for row 1 -> False (generate)
+        # 2. target_path check for row 2 -> True (skip)
+        # (It checks if summary exists first? process_tts logic:
+        #  for row:
+        #   target_path = ...
+        #   if storage.exists(target_path): skip
+        #   ...
+        #   read_text
+        # )
 
+        # Let's map side_effect based on path
         def exists_side_effect(path):
             if path.endswith(".md"):
                 return True
-            if path.endswith("summary1 - tts-arg.wav"):
-                return False
             if path.endswith("summary2 - tts-arg.wav"):
                 return True
             return False
 
-        mock_exists.side_effect = exists_side_effect
-        mock_getsize.return_value = 100  # For the existing file check
+        mock_storage.exists.side_effect = exists_side_effect
+        mock_storage.read_text.return_value = "Summary text"
+        mock_storage.write_bytes.return_value = "/saved/path.wav"
+        mock_storage.get_full_path.return_value = "/full/path/summary2 - tts-arg.wav"
 
-        mock_generate_speech.return_value = b"audio_bytes"
+        # Even length bytes for 16-bit PCM
+        mock_generate_speech.return_value = b"1234"
 
         # Execute
-        updated_df = process_tts(df, "tts-arg", "/tmp")
+        updated_df = process_tts(df, "tts-arg", mock_storage, "/tmp")
 
         # Verify
         self.assertIn("Summary Audio File 1 tts-arg File", updated_df.columns)
@@ -129,33 +123,27 @@ class TestTTS(unittest.TestCase):
             "Summary text", "tts", "arg", "en-US"
         )
 
-        # Check wave_file called once
-        mock_wave_file.assert_called_once()
-        args, _ = mock_wave_file.call_args
+        # Check storage writes
+        mock_storage.write_bytes.assert_called_once()
+        args, _ = mock_storage.write_bytes.call_args
         self.assertTrue(args[0].endswith("summary1 - tts-arg.wav"))
-        self.assertEqual(args[1], b"audio_bytes")
+
+        # Verify content is a valid WAV container
+        wav_content = args[1]
+        self.assertTrue(wav_content.startswith(b"RIFF"))
+        self.assertIn(b"WAVE", wav_content)
 
         # Check DataFrame content
-        # Row 1 should have new audio path
-        # Row 2 should have existing audio path (from logic)
         new_col = updated_df["Summary Audio File 1 tts-arg File"]
-        self.assertTrue(new_col[0].endswith("summary1 - tts-arg.wav"))
-        self.assertTrue(new_col[1].endswith("summary2 - tts-arg.wav"))
+        self.assertEqual(new_col[0], "/saved/path.wav")
+        # For existing file, process_tts appends storage.get_full_path(target_path)
+        # if available
+        self.assertEqual(new_col[1], "/full/path/summary2 - tts-arg.wav")
 
-    @patch("youtube_to_docs.tts.wave_file")
     @patch("youtube_to_docs.tts.generate_speech")
-    @patch("os.path.exists")
-    @patch("os.path.getsize")
-    @patch("os.makedirs")
-    @patch("builtins.open", new_callable=mock_open, read_data="Texto resumen")
     def test_process_tts_with_language(
         self,
-        mock_open,
-        mock_makedirs,
-        mock_getsize,
-        mock_exists,
         mock_generate_speech,
-        mock_wave_file,
     ):
         # Setup DataFrame with language-suffixed column
         df = pl.DataFrame(
@@ -164,22 +152,33 @@ class TestTTS(unittest.TestCase):
             }
         )
 
-        # Mock that audio file doesn't exist
+        # Mock Storage
+        mock_storage = MagicMock()
+
         def exists_side_effect(path):
             if path.endswith(".md"):
                 return True
             return False
 
-        mock_exists.side_effect = exists_side_effect
-        mock_generate_speech.return_value = b"audio_bytes"
+        mock_storage.exists.side_effect = exists_side_effect
+        mock_storage.read_text.return_value = "Texto resumen"
+        mock_storage.write_bytes.return_value = "/saved/es.wav"
+
+        # Even bytes
+        mock_generate_speech.return_value = b"1234"
 
         # Execute
-        process_tts(df, "tts-arg", "/tmp")
+        process_tts(df, "tts-arg", mock_storage, "/tmp")
 
         # Verify generate_speech called with 'es-US'
         mock_generate_speech.assert_called_once_with(
             "Texto resumen", "tts", "arg", "es-US"
         )
+
+        # Verify write was called
+        mock_storage.write_bytes.assert_called_once()
+        args, _ = mock_storage.write_bytes.call_args
+        self.assertTrue(args[1].startswith(b"RIFF"))
 
 
 if __name__ == "__main__":

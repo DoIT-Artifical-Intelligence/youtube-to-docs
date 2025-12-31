@@ -65,6 +65,11 @@ Beyond text, the tool creates audio and visual assets:
         *   **Azure Foundry**: GPT Image models (requires `AZURE_FOUNDRY_ENDPOINT` and `AZURE_FOUNDRY_API_KEY`).
     *   The prompt includes the video title and the generated summary text to ensure relevance.
 
+- **Video Generation**:
+    *   Combines the generated infographic (visual) and TTS audio (sound) into a single MP4 video file.
+    *   Uses `static-ffmpeg` to perform the merging, ensuring no external FFmpeg installation is required.
+    *   This provides a shareable "video summary" format.
+
 ### 6. Cost Tracking
 The system includes a pricing engine (`youtube_to_docs/prices.py`) that tracks token usage for every API call.
 - It calculates costs for input and output tokens based on the specific model used.

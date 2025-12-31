@@ -9,6 +9,7 @@ dev = [
 ]
 test = [
     "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
 ]
 
 [project]
@@ -18,8 +19,8 @@ description = "Convert YouTube videos to docs/sheets for discoverability"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "google-auth>=2.45.0",
-    "google-genai>=1.56.0",
+    "google-auth-oauthlib",
+    "google-genai",
     "google-api-python-client>=2.187.0",
     "isodate>=0.7.2",
     "openai>=1.56.0",
@@ -33,7 +34,6 @@ dependencies = [
 
 [project.scripts]
 youtube-to-docs = "youtube_to_docs.main:main"
-youtube-to-video = "youtube_to_docs.video:main"
 
 [tool.setuptools.packages.find]
 include = ["youtube_to_docs*"]
