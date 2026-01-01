@@ -86,7 +86,7 @@ def run_regression(
     language: str = "en",
     no_youtube_summary: bool = False,
     output_target: Optional[str] = None,
-    all_gemini_flash: bool = False,
+    all_gemini_arg: Optional[str] = None,
 ):
     """Runs the full regression suite for a single video."""
     print(
@@ -118,8 +118,8 @@ def run_regression(
     if no_youtube_summary:
         cmd.append("-nys")
 
-    if all_gemini_flash:
-        cmd.append("--all-gemini-flash")
+    if all_gemini_arg:
+        cmd.extend(["--all", all_gemini_arg])
 
     print(f"Executing: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=False)
@@ -139,19 +139,25 @@ def verify_output(
     language: str = "en",
     no_youtube_summary: bool = False,
     output_target: Optional[str] = None,
-    all_gemini_flash: bool = False,
+    all_gemini_arg: Optional[str] = None,
 ):
     """Verifies that the output CSV exists and contains expected columns and files."""
     print(
         f"\n--- Verifying Output (Lang: {language}, "
-        f"NYS: {no_youtube_summary}, Flash: {all_gemini_flash}) ---"
+        f"NYS: {no_youtube_summary}, All: {all_gemini_arg}) ---"
     )
 
-    if all_gemini_flash:
+    if all_gemini_arg == "gemini-flash":
         model = "gemini-3-flash-preview"
-        transcript_model = transcript_model or "youtube"
+        transcript_model = transcript_model or "gemini-3-flash-preview"
         infographic_model = "gemini-2.5-flash-image"
         tts_model = "gemini-2.5-flash-preview-tts-Kore"
+        no_youtube_summary = True
+    elif all_gemini_arg == "gemini-pro":
+        model = "gemini-3-pro-preview"
+        transcript_model = transcript_model or "gemini-3-pro-preview"
+        infographic_model = "gemini-3-pro-image-preview"
+        tts_model = "gemini-2.5-pro-preview-tts-Kore"
         no_youtube_summary = True
 
     # Ensure model and transcript_model are not None for normalization

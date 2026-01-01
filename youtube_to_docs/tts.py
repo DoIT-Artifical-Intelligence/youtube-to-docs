@@ -1,6 +1,7 @@
 import argparse
 import io
 import os
+import re
 import wave
 from typing import List, Optional, Tuple
 
@@ -153,9 +154,32 @@ def process_tts(
                 new_col_values.append(None)
                 continue
 
-            summary_filename = os.path.basename(summary_path)
-            base_name = os.path.splitext(summary_filename)[0]
-            audio_filename = f"{base_name} - {tts_arg}.wav"
+            if row.get("Title") and row.get("URL"):
+                # Extract Video ID
+                video_id = "unknown"
+                match = re.search(r"v=([a-zA-Z0-9_-]+)", row["URL"])
+                if match:
+                    video_id = match.group(1)
+                elif "youtu.be/" in row["URL"]:
+                    video_id = row["URL"].split("youtu.be/")[1].split("?")[0]
+
+                # Safe Title
+                safe_title = (
+                    re.sub(r'[\\/*?:"><>|]', "_", row["Title"])
+                    .replace("\n", " ")
+                    .replace("\r", "")
+                )
+
+                # Construct Name
+                audio_filename = (
+                    f"{video_id} - {safe_title} - {tts_arg} ({lang_code}).wav"
+                )
+                summary_filename = audio_filename  # For logging purposes
+            else:
+                summary_filename = os.path.basename(summary_path)
+                base_name = os.path.splitext(summary_filename)[0]
+                audio_filename = f"{base_name} - {tts_arg}.wav"
+
             # Use relative path for storage
             target_path = os.path.join(audio_dir, audio_filename)
 

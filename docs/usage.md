@@ -27,6 +27,7 @@ youtube-to-docs
 | `--no-youtube-summary` | If set, skips generating a secondary summary from the YouTube transcript when using an AI model for the primary transcript. | `False` | `--no-youtube-summary` |
 | `-l`, `--language` | The target language(s) (e.g. 'es', 'fr', 'en'). Can be a comma-separated list. Default is 'en'. | `en` | `-l es,fr` |
 | `--combine-infographic-audio` | Combine the infographic and audio summary into a video file (MP4). Requires both `--tts` and `--infographic` to be effective. | `False` | `--combine-infographic-audio` |
+| `--all` | Shortcut to use a specific model suite for everything. Supported: `'gemini-flash'`, `'gemini-pro'`. Sets models for summary, TTS, and infographic, and enables `--no-youtube-summary`. | `None` | `--all gemini-flash` |
 
 ### Examples
 

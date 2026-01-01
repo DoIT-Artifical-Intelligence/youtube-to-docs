@@ -11,23 +11,30 @@ This directory contains regression tests for the `youtube-to-docs` tool.
 - **[regression_en_full.py](file:///c:/Users/ray.bell/Documents/Code/youtube-to-docs/scripts/regression_en_full.py)**: A full run in English featuring transcription, summarization, infographics, and text-to-speech. Includes secondary "from youtube" processing for summaries, QA, and speakers.
 - **[regression_es_no_yt_summary.py](file:///c:/Users/ray.bell/Documents/Code/youtube-to-docs/scripts/regression_es_no_yt_summary.py)**: A Spanish run with no secondary YouTube summary processing (`-nys` flag).
 - **[regression_workspace.py](file:///c:/Users/ray.bell/Documents/Code/youtube-to-docs/scripts/regression_workspace.py)**: A run that stores results in Google Drive (specifically a folder named `youtube-to-docs-test-drive`).
+- **[regression_workspace_es.py](file:///c:/Users/ray.bell/Documents/Code/youtube-to-docs/scripts/regression_workspace_es.py)**: A Spanish run that stores results in Google Drive using Gemini Pro models.
 
 ## Usage
 
 To run a specific test case:
 
 ```bash
-uv run python .\scripts\regression_en_full.py
+uv run python scripts/regression_en_full.py
 ```
 
 or
 
 ```bash
-uv run python .\scripts\regression_es_no_yt_summary.py
+uv run python scripts/regression_es_no_yt_summary.py
 ```
 
 or
 
 ```bash
-uv run python .\scripts\regression_workspace.py
+uv run python scripts/regression_workspace.py
+```
+
+or
+
+```bash
+uv run python scripts/regression_workspace_es.py
 ```

@@ -10,9 +10,12 @@ from regression_core import (
 
 
 def main():
-    print("=== YouTube-to-Docs Regression: Google Workspace Storage ===")
+    print("=== YouTube-to-Docs Regression: Google Workspace Storage (Spanish, Gemini Pro) ===")
 
     # 1. Resolve Drive Folder (Delete if exists, then Recreate)
+    # We use a different folder name to avoid conflicts with the EN test if run in parallel,
+    # or we could use the same one if we want to test appending.
+    # Let's use a distinct one for a clean isolation test.
     folder_id = resolve_drive_folder(
         "youtube-to-docs-test-drive", delete_if_exists=True
     )
@@ -30,13 +33,13 @@ def main():
 
     # 4. Run Regression with Workspace Target
     run_regression(
-        None,  # model will be set by all_gemini_flash
+        None,  # model will be set by all_gemini_arg
         None,  # transcript_model
         None,  # infographic_model
         None,  # tts_model
-        language="en",
+        language="es",
         output_target=folder_id,
-        all_gemini_arg="gemini-flash",
+        all_gemini_arg="gemini-pro",
     )
 
     # 5. Verify Output from Workspace
@@ -45,12 +48,12 @@ def main():
         None,
         None,
         None,
-        language="en",
+        language="es",
         output_target=folder_id,
-        all_gemini_arg="gemini-flash",
+        all_gemini_arg="gemini-pro",
     )
 
-    print("\n=== SUCCESS: Workspace Storage Regression Passed ===")
+    print("\n=== SUCCESS: Workspace Storage Regression (Spanish) Passed ===")
 
 
 if __name__ == "__main__":

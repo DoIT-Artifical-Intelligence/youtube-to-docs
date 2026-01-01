@@ -237,46 +237,42 @@ def main(args_list: list[str] | None = None) -> None:
         help="Combine the infographic and audio summary into a video file.",
     )
     parser.add_argument(
-        "--all-gemini-flash",
-        action="store_true",
+        "--all",
         help=(
-            "Shortcut to use Gemini Flash models for everything: "
-            "summarization (gemini-3-flash-preview), "
+            "Shortcut to use a specific model suite for everything. \n"
+            "Supported values: \n"
+            "'gemini-flash': summarization (gemini-3-flash-preview), "
             "TTS (gemini-2.5-flash-preview-tts-Kore), "
-            "and Infographic (gemini-2.5-flash-image). "
-            "Also sets --no-youtube-summary."
-        ),
-    )
-    parser.add_argument(
-        "--all-gemini-pro",
-        action="store_true",
-        help=(
-            "Shortcut to use Gemini Pro models for everything: "
-            "summarization (gemini-3-pro-preview), "
+            "and Infographic (gemini-2.5-flash-image). \n"
+            "'gemini-pro': summarization (gemini-3-pro-preview), "
             "TTS (gemini-2.5-pro-preview-tts-Kore), "
-            "and Infographic (gemini-3-pro-image-preview). "
+            "and Infographic (gemini-3-pro-image-preview). \n"
             "Also sets --no-youtube-summary."
         ),
     )
 
     args = parser.parse_args(args_list)
 
-    if args.all_gemini_flash:
+    if args.all == "gemini-flash":
         if args.model is None:
             args.model = "gemini-3-flash-preview"
         if args.tts is None:
             args.tts = "gemini-2.5-flash-preview-tts-Kore"
         if args.infographic is None:
             args.infographic = "gemini-2.5-flash-image"
+        if args.transcript == "youtube":
+            args.transcript = "gemini-3-flash-preview"
         args.no_youtube_summary = True
 
-    if args.all_gemini_pro:
+    elif args.all == "gemini-pro":
         if args.model is None:
             args.model = "gemini-3-pro-preview"
         if args.tts is None:
             args.tts = "gemini-2.5-pro-preview-tts-Kore"
         if args.infographic is None:
             args.infographic = "gemini-3-pro-image-preview"
+        if args.transcript == "youtube":
+            args.transcript = "gemini-3-pro-preview"
         args.no_youtube_summary = True
     transcript_arg = args.transcript
     video_id_input = args.video_id
@@ -409,6 +405,33 @@ def main(args_list: list[str] | None = None) -> None:
 
         safe_title = re.sub(r'[\\/*?:"><>|]', "_", video_title).replace("\n", " ")
         safe_title = safe_title.replace("\r", "")
+
+        # Initial Save: Create the sheet with basic metadata if it's a new video
+        if needs_details:
+            try:
+                # Create a temporary DF with just this new row
+                temp_row_df = pl.DataFrame([row])
+
+                # Combine with existing data (excluding this video if it was somehow there, but we checked)
+                # existing_df contains all OTHER videos.
+                if existing_df is not None:
+                    # We might need to align columns if row has new keys, handled by diagonal concat
+                    current_save_df = pl.concat(
+                        [existing_df, temp_row_df], how="diagonal"
+                    )
+                else:
+                    current_save_df = temp_row_df
+
+                if "Data Published" in current_save_df.columns:
+                    current_save_df = current_save_df.sort(
+                        "Data Published", descending=True
+                    )
+
+                current_save_df = reorder_columns(current_save_df)
+                storage.save_dataframe(current_save_df, outfile_path)
+                print(f"Created/Updated {outfile} with initial details.")
+            except Exception as e:
+                print(f"Warning: Could not perform initial save: {e}")
 
         # Audio Extraction (needed if AI transcript is requested,
         # regardless of language)
@@ -1339,6 +1362,13 @@ def main(args_list: list[str] | None = None) -> None:
         if "Data Published" in final_df.columns:
             final_df = final_df.sort("Data Published", descending=True)
 
+        # Intermediate save
+        if should_save:
+            temp_df = reorder_columns(final_df)
+            # We use the same path, updating the sheet
+            intermediate_path = storage.save_dataframe(temp_df, outfile_path)
+            print(f"Intermediate save (pre-TTS/Video): {intermediate_path}")
+
         if tts_arg:
             print("Checking for TTS generation...")
             # TTS will scan all columns, so it should pick up the new
@@ -1361,6 +1391,12 @@ def main(args_list: list[str] | None = None) -> None:
             print("No new data to gather or all videos already processed.")
     else:
         print("No new data to gather or all videos already processed.")
+
+    # Cleanup local temp dir
+    if os.path.exists(local_temp_dir):
+        import shutil
+
+        shutil.rmtree(local_temp_dir)
 
 
 if __name__ == "__main__":

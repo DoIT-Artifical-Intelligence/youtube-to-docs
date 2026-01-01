@@ -541,7 +541,8 @@ class TestMain(unittest.TestCase):
                 "vid1",
                 "-o",
                 self.outfile,
-                "--all-gemini-flash",
+                "--all",
+                "gemini-flash",
             ],
         ):
             # We don't mock open because we want storage to actually work if it's local
@@ -618,7 +619,8 @@ class TestMain(unittest.TestCase):
                 "vid1",
                 "-o",
                 self.outfile,
-                "--all-gemini-pro",
+                "--all",
+                "gemini-pro",
             ],
         ):
             main.main()
