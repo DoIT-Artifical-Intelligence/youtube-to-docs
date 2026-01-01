@@ -1,6 +1,5 @@
 import io
 import os
-import time
 from pathlib import Path
 
 import pytest
@@ -56,7 +55,7 @@ def test_google_drive_upload():
         file_id = doc.get("id")
         print(f"Success! ID: {file_id}\nLink: {doc.get('webViewLink')}")
         print("Deleting in 5 seconds...")
-        time.sleep(5)
+        # time.sleep(5)
         service.files().delete(fileId=file_id).execute()
         print("Done.")
 
@@ -88,7 +87,7 @@ def test_google_sheet_upload():
         file_id = sheet.get("id")
         print(f"Success! ID: {file_id}\nLink: {sheet.get('webViewLink')}")
         print("Deleting in 5 seconds...")
-        time.sleep(5)
+        # time.sleep(5)
         service.files().delete(fileId=file_id).execute()
         print("Done.")
 

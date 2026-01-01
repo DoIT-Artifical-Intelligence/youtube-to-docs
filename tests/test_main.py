@@ -12,8 +12,11 @@ class TestMain(unittest.TestCase):
         self.outfile = "test_output_main.csv"
         if os.path.exists(self.outfile):
             os.remove(self.outfile)
+        self.sleep_patcher = patch("youtube_to_docs.main.time.sleep")
+        self.mock_sleep = self.sleep_patcher.start()
 
     def tearDown(self):
+        self.sleep_patcher.stop()
         if os.path.exists(self.outfile):
             os.remove(self.outfile)
 
@@ -494,10 +497,14 @@ class TestMain(unittest.TestCase):
     @patch("youtube_to_docs.main.generate_summary")
     @patch("youtube_to_docs.main.process_tts")
     @patch("youtube_to_docs.main.generate_infographic")
+    @patch("youtube_to_docs.main.extract_speakers")
+    @patch("youtube_to_docs.main.generate_qa")
     @patch("os.makedirs")
     def test_all_gemini_flash_flag(
         self,
         mock_makedirs,
+        mock_gen_qa,
+        mock_extract_speakers,
         mock_gen_info,
         mock_tts,
         mock_gen_summary,
@@ -521,6 +528,8 @@ class TestMain(unittest.TestCase):
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
+        mock_extract_speakers.return_value = ("Speaker 1", 10, 10)
+        mock_gen_qa.return_value = ("Q&A", 20, 20)
 
         # Ensure process_tts returns the dataframe it receives
         mock_tts.side_effect = lambda df, *args, **kwargs: df
@@ -565,10 +574,14 @@ class TestMain(unittest.TestCase):
     @patch("youtube_to_docs.main.generate_summary")
     @patch("youtube_to_docs.main.process_tts")
     @patch("youtube_to_docs.main.generate_infographic")
+    @patch("youtube_to_docs.main.extract_speakers")
+    @patch("youtube_to_docs.main.generate_qa")
     @patch("os.makedirs")
     def test_all_gemini_pro_flag(
         self,
         mock_makedirs,
+        mock_gen_qa,
+        mock_extract_speakers,
         mock_gen_info,
         mock_tts,
         mock_gen_summary,
@@ -592,6 +605,8 @@ class TestMain(unittest.TestCase):
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
+        mock_extract_speakers.return_value = ("Speaker 1", 10, 10)
+        mock_gen_qa.return_value = ("Q&A", 20, 20)
 
         # Ensure process_tts returns the dataframe it receives
         mock_tts.side_effect = lambda df, *args, **kwargs: df
