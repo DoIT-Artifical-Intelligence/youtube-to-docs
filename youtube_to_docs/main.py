@@ -13,6 +13,7 @@ from youtube_to_docs.llms import (
     generate_transcript,
     get_model_pricing,
 )
+from youtube_to_docs.models import MODEL_SUITES
 from youtube_to_docs.storage import GoogleDriveStorage, LocalStorage
 from youtube_to_docs.transcript import (
     extract_audio,
@@ -138,27 +139,18 @@ def main(args_list: list[str] | None = None) -> None:
 
     args = parser.parse_args(args_list)
 
-    if args.all == "gemini-flash":
+    if args.all in MODEL_SUITES:
+        suite = MODEL_SUITES[args.all]
         if args.model is None:
-            args.model = "gemini-3-flash-preview"
+            args.model = suite["model"]
         if args.tts is None:
-            args.tts = "gemini-2.5-flash-preview-tts-Kore"
+            args.tts = suite["tts"]
         if args.infographic is None:
-            args.infographic = "gemini-2.5-flash-image"
+            args.infographic = suite["infographic"]
         if args.transcript == "youtube":
-            args.transcript = "gemini-3-flash-preview"
+            args.transcript = suite["transcript"]
         args.no_youtube_summary = True
 
-    elif args.all == "gemini-pro":
-        if args.model is None:
-            args.model = "gemini-3-pro-preview"
-        if args.tts is None:
-            args.tts = "gemini-2.5-pro-preview-tts-Kore"
-        if args.infographic is None:
-            args.infographic = "gemini-3-pro-image-preview"
-        if args.transcript == "youtube":
-            args.transcript = "gemini-3-pro-preview"
-        args.no_youtube_summary = True
     transcript_arg = args.transcript
     video_id_input = args.video_id
     outfile = args.outfile
