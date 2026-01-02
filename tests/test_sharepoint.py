@@ -177,6 +177,9 @@ def test_markdown_to_word_upload():
         web_url = item.get("webUrl")
         print(f"Success! ID: {file_id}\nLink: {web_url}")
 
+        if not isinstance(file_id, str):
+            raise RuntimeError("Upload response did not contain a valid ID")
+
         # Cleanup
         print("Deleting uploaded file...")
         delete_with_retry(token, file_id)
@@ -208,6 +211,9 @@ def test_csv_to_excel_upload():
         file_id = item.get("id")
         web_url = item.get("webUrl")
         print(f"Success! ID: {file_id}\nLink: {web_url}")
+
+        if not isinstance(file_id, str):
+            raise RuntimeError("Upload response did not contain a valid ID")
 
         # Cleanup
         print("Deleting uploaded file...")
