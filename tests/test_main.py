@@ -52,7 +52,8 @@ class TestMain(unittest.TestCase):
         mock_get_pricing.return_value = (0.0, 0.0)
 
         with patch(
-            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+            "sys.argv",
+            ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test", "--verbose"],
         ):
             with patch("builtins.open", mock_open()):
                 main.main()
@@ -69,6 +70,54 @@ class TestMain(unittest.TestCase):
         )  # Since pricing is mocked to 0.0
         self.assertIn("Transcript File human generated", df.columns)
         self.assertIn("Transcript characters from youtube", df.columns)
+
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("youtube_to_docs.main.get_model_pricing")
+    @patch("youtube_to_docs.main.generate_summary")
+    @patch("os.makedirs")
+    def test_no_verbose_no_cost_columns(
+        self,
+        mock_makedirs,
+        mock_gen_summary,
+        mock_get_pricing,
+        mock_fetch_trans,
+        mock_details,
+        mock_resolve,
+        mock_svc,
+    ):
+        mock_resolve.return_value = ["vid1"]
+        mock_details.return_value = (
+            "Title 1",
+            "Desc",
+            "2023-01-01",
+            "Chan",
+            "Tags",
+            "0:01:00",
+            "url1",
+        )
+        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_gen_summary.return_value = ("Summary 1", 100, 50)
+        mock_get_pricing.return_value = (0.0, 0.0)
+
+        # Run without --verbose
+        with patch(
+            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+        ):
+            with patch("builtins.open", mock_open()):
+                main.main()
+
+        self.assertTrue(os.path.exists(self.outfile))
+        df = pl.read_csv(self.outfile)
+        self.assertEqual(len(df), 1)
+
+        # Verify cost columns are NOT present
+        self.assertNotIn("gemini-test summary cost from youtube ($)", df.columns)
+        # Note: One sentence summary might not be generated
+        # if not explicitly requested or if it depends on summary
+        # But here we just check if the cost column is missing, which it should be.
 
     @patch("youtube_to_docs.main.get_youtube_service")
     @patch("youtube_to_docs.main.resolve_video_ids")
@@ -224,7 +273,10 @@ class TestMain(unittest.TestCase):
 
         mock_exists.side_effect = side_effect
 
-        with patch("sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "haiku"]):
+        with patch(
+            "sys.argv",
+            ["main.py", "vid1", "-o", self.outfile, "-m", "haiku", "--verbose"],
+        ):
             with patch("builtins.open", mock_open(read_data="Transcript Content")):
                 main.main()
 
@@ -268,7 +320,8 @@ class TestMain(unittest.TestCase):
         mock_get_pricing.return_value = (0.0, 0.0)
 
         with patch(
-            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+            "sys.argv",
+            ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test", "--verbose"],
         ):
             with patch("builtins.open", mock_open()):
                 main.main()
@@ -336,6 +389,7 @@ class TestMain(unittest.TestCase):
                 "gemini-test",
                 "--infographic",
                 "gemini-image",
+                "--verbose",
             ],
         ):
             with patch("builtins.open", mock_open()):
@@ -753,7 +807,8 @@ class TestMain(unittest.TestCase):
         mock_get_pricing.return_value = (0.0, 0.0)
 
         with patch(
-            "sys.argv", ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test"]
+            "sys.argv",
+            ["main.py", "vid1", "-o", self.outfile, "-m", "gemini-test", "--verbose"],
         ):
             with patch("builtins.open", mock_open()):
                 main.main()

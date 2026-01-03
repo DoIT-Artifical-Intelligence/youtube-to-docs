@@ -591,13 +591,16 @@ def main(args_list: list[str] | None = None) -> None:
                             print(f"Error writing AI transcript: {e}")
 
                         # Calculate STT Cost
-                        input_price, output_price = get_model_pricing(transcript_arg)
-                        if input_price is not None and output_price is not None:
-                            stt_cost = (stt_in / 1_000_000) * input_price + (
-                                stt_out / 1_000_000
-                            ) * output_price
-                            row[stt_cost_col] = round(stt_cost, 2)
-                            vprint(f"STT cost: ${row[stt_cost_col]:.2f}")
+                        if verbose:
+                            input_price, output_price = get_model_pricing(
+                                transcript_arg
+                            )
+                            if input_price is not None and output_price is not None:
+                                stt_cost = (stt_in / 1_000_000) * input_price + (
+                                    stt_out / 1_000_000
+                                ) * output_price
+                                row[stt_cost_col] = round(stt_cost, 2)
+                                vprint(f"STT cost: ${row[stt_cost_col]:.2f}")
 
                 # If AI transcript exists (either found or generated),
                 # use it for summaries
@@ -700,13 +703,16 @@ def main(args_list: list[str] | None = None) -> None:
                             print(f"Error writing speakers file: {e}")
 
                     # Calculate Speaker Cost immediately
-                    input_price, output_price = get_model_pricing(model_name)
-                    if input_price is not None and output_price is not None:
-                        speaker_cost = (speakers_input / 1_000_000) * input_price + (
-                            speakers_output / 1_000_000
-                        ) * output_price
-                        row[speaker_cost_col_name] = round(speaker_cost, 2)
-                        vprint(f"Speaker extraction cost: ${speaker_cost:.2f}")
+                    if verbose:
+                        input_price, output_price = get_model_pricing(model_name)
+                        if input_price is not None and output_price is not None:
+                            speaker_cost = (
+                                speakers_input / 1_000_000
+                            ) * input_price + (
+                                speakers_output / 1_000_000
+                            ) * output_price
+                            row[speaker_cost_col_name] = round(speaker_cost, 2)
+                            vprint(f"Speaker extraction cost: ${speaker_cost:.2f}")
 
                 # QA Generation
                 qa_col_name = f"QA Text {model_name} from {transcript_arg}{col_suffix}"
@@ -759,16 +765,17 @@ def main(args_list: list[str] | None = None) -> None:
                             print(f"Error writing Q&A file: {e}")
 
                     # Calculate QA Cost
-                    input_price, output_price = get_model_pricing(model_name)
-                    if input_price is not None and output_price is not None:
-                        # QA input tokens include the speaker text provided in
-                        # the prompt
-                        qa_cost = (qa_input / 1_000_000) * input_price + (
-                            qa_output / 1_000_000
-                        ) * output_price
-                        qa_cost = round(qa_cost, 2)
-                        row[qa_cost_col_name] = qa_cost
-                        vprint(f"Q&A cost: ${qa_cost:.2f}")
+                    if verbose:
+                        input_price, output_price = get_model_pricing(model_name)
+                        if input_price is not None and output_price is not None:
+                            # QA input tokens include the speaker text provided in
+                            # the prompt
+                            qa_cost = (qa_input / 1_000_000) * input_price + (
+                                qa_output / 1_000_000
+                            ) * output_price
+                            qa_cost = round(qa_cost, 2)
+                            row[qa_cost_col_name] = qa_cost
+                            vprint(f"Q&A cost: ${qa_cost:.2f}")
 
                 # Check if we already have it in the row (from existing_row
                 # or just loaded)
@@ -782,48 +789,54 @@ def main(args_list: list[str] | None = None) -> None:
                             and row[summary_cost_col_name] != row[summary_cost_col_name]
                         )
                     ):  # Check for NaN
-                        vprint(f"Backfilling cost for model: {model_name}")
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            # Estimate tokens: ~4 chars per token
-                            est_input_tokens = len(transcript) / 4
-                            est_output_tokens = len(row[summary_col_name]) / 4
-                            summary_cost = (
-                                est_input_tokens / 1_000_000
-                            ) * input_price + (
-                                est_output_tokens / 1_000_000
-                            ) * output_price
+                        if verbose:
+                            vprint(f"Backfilling cost for model: {model_name}")
+                            input_price, output_price = get_model_pricing(model_name)
+                            if input_price is not None and output_price is not None:
+                                # Estimate tokens: ~4 chars per token
+                                est_input_tokens = len(transcript) / 4
+                                est_output_tokens = len(row[summary_col_name]) / 4
+                                summary_cost = (
+                                    est_input_tokens / 1_000_000
+                                ) * input_price + (
+                                    est_output_tokens / 1_000_000
+                                ) * output_price
 
-                            # Add speaker cost if we just generated them or
-                            # can backfill it
-                            if speakers_input > 0 or speakers_output > 0:
+                                # Add speaker cost if we just generated them or
+                                # can backfill it
+                                if speakers_input > 0 or speakers_output > 0:
+                                    s_cost = (
+                                        speakers_input / 1_000_000
+                                    ) * input_price + (
+                                        speakers_output / 1_000_000
+                                    ) * output_price
+                                    summary_cost += s_cost
+                                elif speaker_cost_col_name in row and not (
+                                    isinstance(row[speaker_cost_col_name], float)
+                                    and row[speaker_cost_col_name]
+                                    != row[speaker_cost_col_name]
+                                ):
+                                    summary_cost += row[speaker_cost_col_name]
+
+                                summary_cost = round(summary_cost, 2)
+                                row[summary_cost_col_name] = summary_cost
+                                vprint(f"Estimated summary cost: ${summary_cost:.2f}")
+                    elif speakers_input > 0 or speakers_output > 0:
+                        # Cost exists, but we generated speakers. Add that cost.
+                        if verbose:
+                            input_price, output_price = get_model_pricing(model_name)
+                            if input_price is not None and output_price is not None:
                                 s_cost = (speakers_input / 1_000_000) * input_price + (
                                     speakers_output / 1_000_000
                                 ) * output_price
-                                summary_cost += s_cost
-                            elif speaker_cost_col_name in row and not (
-                                isinstance(row[speaker_cost_col_name], float)
-                                and row[speaker_cost_col_name]
-                                != row[speaker_cost_col_name]
-                            ):
-                                summary_cost += row[speaker_cost_col_name]
-
-                            summary_cost = round(summary_cost, 2)
-                            row[summary_cost_col_name] = summary_cost
-                            vprint(f"Estimated summary cost: ${summary_cost:.2f}")
-                    elif speakers_input > 0 or speakers_output > 0:
-                        # Cost exists, but we generated speakers. Add that cost.
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            s_cost = (speakers_input / 1_000_000) * input_price + (
-                                speakers_output / 1_000_000
-                            ) * output_price
-                            current_cost = row[summary_cost_col_name]
-                            row[summary_cost_col_name] = round(current_cost + s_cost, 2)
-                            vprint(
-                                "Updated cost with speakers: "
-                                f"${row[summary_cost_col_name]:.2f}"
-                            )
+                                current_cost = row[summary_cost_col_name]
+                                row[summary_cost_col_name] = round(
+                                    current_cost + s_cost, 2
+                                )
+                                vprint(
+                                    "Updated cost with speakers: "
+                                    f"${row[summary_cost_col_name]:.2f}"
+                                )
                     continue
 
                 # Check disk for summary file
@@ -853,17 +866,19 @@ def main(args_list: list[str] | None = None) -> None:
                     )
 
                     summary_cost = float("nan")
-                    input_price, output_price = get_model_pricing(model_name)
-                    if input_price is not None and output_price is not None:
-                        # Add speaker tokens
-                        total_input = input_tokens + speakers_input
-                        total_output = output_tokens + speakers_output
+                    if verbose:
+                        input_price, output_price = get_model_pricing(model_name)
+                        if input_price is not None and output_price is not None:
+                            # Add speaker tokens
+                            total_input = input_tokens + speakers_input
+                            total_output = output_tokens + speakers_output
 
-                        summary_cost = (total_input / 1_000_000) * input_price + (
-                            total_output / 1_000_000
-                        ) * output_price
-                        summary_cost = round(summary_cost, 2)
-                        vprint(f"Summary cost: ${summary_cost:.2f}")
+                            summary_cost = (total_input / 1_000_000) * input_price + (
+                                total_output / 1_000_000
+                            ) * output_price
+                            summary_cost = round(summary_cost, 2)
+                            vprint(f"Summary cost: ${summary_cost:.2f}")
+                            row[summary_cost_col_name] = summary_cost
 
                     summary_full_path = ""
                     if summaries_dir and summary_text:
@@ -882,7 +897,6 @@ def main(args_list: list[str] | None = None) -> None:
 
                     row[summary_file_col_name] = summary_full_path
                     row[summary_col_name] = summary_text
-                    row[summary_cost_col_name] = summary_cost
 
                 # One Sentence Summary Generation
                 one_sentence_col_name = (
@@ -909,14 +923,15 @@ def main(args_list: list[str] | None = None) -> None:
                     row[one_sentence_col_name] = one_sentence_text
 
                     # Cost
-                    input_price, output_price = get_model_pricing(model_name)
-                    if input_price is not None and output_price is not None:
-                        cost = (os_input / 1_000_000) * input_price + (
-                            os_output / 1_000_000
-                        ) * output_price
-                        cost = round(cost, 2)
-                        row[one_sentence_cost_col_name] = cost
-                        vprint(f"One sentence summary cost: ${cost:.2f}")
+                    if verbose:
+                        input_price, output_price = get_model_pricing(model_name)
+                        if input_price is not None and output_price is not None:
+                            cost = (os_input / 1_000_000) * input_price + (
+                                os_output / 1_000_000
+                            ) * output_price
+                            cost = round(cost, 2)
+                            row[one_sentence_cost_col_name] = cost
+                            vprint(f"One sentence summary cost: ${cost:.2f}")
 
                 # --- Secondary Speaker Extraction from YouTube (if applicable) ---
                 yt_speakers_text = 'float("nan")'
@@ -1023,19 +1038,20 @@ def main(args_list: list[str] | None = None) -> None:
                                 print(f"Error writing YouTube speakers file: {e}")
 
                         # Calculate YouTube Speaker Cost
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            yt_speaker_cost = (
-                                yt_speakers_input / 1_000_000
-                            ) * input_price + (
-                                yt_speakers_output / 1_000_000
-                            ) * output_price
-                            yt_speaker_cost = round(yt_speaker_cost, 2)
-                            row[yt_speaker_cost_col_name] = yt_speaker_cost
-                            vprint(
-                                "YouTube Speaker extraction cost: "
-                                f"${yt_speaker_cost:.2f}"
-                            )
+                        if verbose:
+                            input_price, output_price = get_model_pricing(model_name)
+                            if input_price is not None and output_price is not None:
+                                yt_speaker_cost = (
+                                    yt_speakers_input / 1_000_000
+                                ) * input_price + (
+                                    yt_speakers_output / 1_000_000
+                                ) * output_price
+                                yt_speaker_cost = round(yt_speaker_cost, 2)
+                                row[yt_speaker_cost_col_name] = yt_speaker_cost
+                                vprint(
+                                    "YouTube Speaker extraction cost: "
+                                    f"${yt_speaker_cost:.2f}"
+                                )
 
                 # --- Secondary Q&A from YouTube (if applicable) ---
                 if (
@@ -1093,14 +1109,16 @@ def main(args_list: list[str] | None = None) -> None:
                             row[yt_qa_col_name] = float("nan")
 
                         yt_qa_cost = float("nan")
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            # Pure QA cost
-                            cost = (yt_qa_in / 1_000_000) * input_price + (
-                                yt_qa_out / 1_000_000
-                            ) * output_price
-                            yt_qa_cost = round(cost, 2)
-                            vprint(f"YouTube Q&A cost: ${yt_qa_cost:.2f}")
+                        if verbose:
+                            input_price, output_price = get_model_pricing(model_name)
+                            if input_price is not None and output_price is not None:
+                                # Pure QA cost
+                                cost = (yt_qa_in / 1_000_000) * input_price + (
+                                    yt_qa_out / 1_000_000
+                                ) * output_price
+                                yt_qa_cost = round(cost, 2)
+                                vprint(f"YouTube Q&A cost: ${yt_qa_cost:.2f}")
+                                row[yt_qa_cost_col_name] = yt_qa_cost
 
                         yt_qa_full_path = ""
                         if row[yt_qa_col_name] and not isinstance(
@@ -1121,7 +1139,6 @@ def main(args_list: list[str] | None = None) -> None:
                                 print(f"Error writing YouTube Q&A: {e}")
 
                         row[yt_qa_file_col_name] = yt_qa_full_path
-                        row[yt_qa_cost_col_name] = yt_qa_cost
 
                 # --- Secondary Summary from YouTube (if applicable) ---
                 if (
@@ -1180,19 +1197,24 @@ def main(args_list: list[str] | None = None) -> None:
                         )
 
                         yt_summary_cost = float("nan")
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            # We don't include speaker tokens here as we didn't extract
-                            # speakers from the YouTube transcript specifically for this
-                            # summary.
-                            # If we wanted to be precise, we'd need to extract speakers
-                            # from YT transcript too.
-                            # For now, just the summary cost.
-                            cost = (yt_input_tokens / 1_000_000) * input_price + (
-                                yt_output_tokens / 1_000_000
-                            ) * output_price
-                            yt_summary_cost = round(cost, 2)
-                            vprint(f"YouTube Summary cost: ${yt_summary_cost:.2f}")
+                        if verbose:
+                            input_price, output_price = get_model_pricing(model_name)
+                            if input_price is not None and output_price is not None:
+                                # We don't include speaker tokens here
+                                # as we didn't extract
+                                # speakers from the YouTube transcript
+                                # specifically for this
+                                # summary.
+                                # If we wanted to be precise,
+                                # we'd need to extract speakers
+                                # from YT transcript too.
+                                # For now, just the summary cost.
+                                cost = (yt_input_tokens / 1_000_000) * input_price + (
+                                    yt_output_tokens / 1_000_000
+                                ) * output_price
+                                yt_summary_cost = round(cost, 2)
+                                vprint(f"YouTube Summary cost: ${yt_summary_cost:.2f}")
+                                row[yt_sum_cost_col_name] = yt_summary_cost
 
                         yt_summary_full_path = ""
                         if summaries_dir and yt_summary_text:
@@ -1212,7 +1234,6 @@ def main(args_list: list[str] | None = None) -> None:
 
                         row[yt_sum_file_col_name] = yt_summary_full_path
                         row[yt_sum_col_name] = yt_summary_text
-                        row[yt_sum_cost_col_name] = yt_summary_cost
 
                     # One Sentence Summary for YouTube Summary
                     yt_one_sentence_col_name = (
@@ -1241,14 +1262,17 @@ def main(args_list: list[str] | None = None) -> None:
                         row[yt_one_sentence_col_name] = yt_one_sentence_text
 
                         # Cost
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            cost = (yt_os_input / 1_000_000) * input_price + (
-                                yt_os_output / 1_000_000
-                            ) * output_price
-                            cost = round(cost, 2)
-                            row[yt_one_sentence_cost_col_name] = cost
-                            vprint(f"YouTube one sentence summary cost: ${cost:.2f}")
+                        if verbose:
+                            input_price, output_price = get_model_pricing(model_name)
+                            if input_price is not None and output_price is not None:
+                                cost = (yt_os_input / 1_000_000) * input_price + (
+                                    yt_os_output / 1_000_000
+                                ) * output_price
+                                cost = round(cost, 2)
+                                row[yt_one_sentence_cost_col_name] = cost
+                                vprint(
+                                    f"YouTube one sentence summary cost: ${cost:.2f}"
+                                )
 
             # Infographic Generation
             if infographic_arg:
@@ -1322,20 +1346,21 @@ def main(args_list: list[str] | None = None) -> None:
                             row[info_col] = saved_path
 
                             # Calculate Infographic Cost
-                            input_price, output_price = get_model_pricing(
-                                infographic_arg
-                            )
-                            if input_price is not None and output_price is not None:
-                                cost = (input_tokens / 1_000_000) * input_price + (
-                                    output_tokens / 1_000_000
-                                ) * output_price
-                                cost = round(cost, 2)
-                                cost_col = (
-                                    f"Summary Infographic Cost {m_name} "
-                                    f"{infographic_arg} ($)"
+                            if verbose:
+                                input_price, output_price = get_model_pricing(
+                                    infographic_arg
                                 )
-                                row[cost_col] = cost
-                                vprint(f"Infographic cost: ${cost:.2f}")
+                                if input_price is not None and output_price is not None:
+                                    cost = (input_tokens / 1_000_000) * input_price + (
+                                        output_tokens / 1_000_000
+                                    ) * output_price
+                                    cost = round(cost, 2)
+                                    cost_col = (
+                                        f"Summary Infographic Cost {m_name} "
+                                        f"{infographic_arg} ($)"
+                                    )
+                                    row[cost_col] = cost
+                                    vprint(f"Infographic cost: ${cost:.2f}")
 
                         except Exception as e:
                             print(f"Error writing infographic: {e}")
