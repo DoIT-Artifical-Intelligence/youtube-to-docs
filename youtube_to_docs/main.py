@@ -275,7 +275,7 @@ def main(args_list: list[str] | None = None) -> None:
 
     rows = []
 
-    for video_id in video_ids:
+    for i, video_id in enumerate(video_ids, 1):
         url = f"https://www.youtube.com/watch?v={video_id}"
         vprint(f"Processing Video ID: {video_id}")
 
@@ -330,7 +330,7 @@ def main(args_list: list[str] | None = None) -> None:
             video_duration = row.get("Duration", "")
 
         display_title = video_title if video_title else video_id
-        print(f"Video Title: {display_title}")
+        print(f"(Video {i} of {len(video_ids)}) Video Title: {display_title}")
 
         safe_title = re.sub(r'[\\/*?:"><>|]', "_", video_title).replace("\n", " ")
         safe_title = safe_title.replace("\r", "")
