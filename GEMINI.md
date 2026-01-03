@@ -8,7 +8,7 @@ This extension provides an MCP server to process YouTube videos using the `youtu
 Processes a YouTube video to generate transcripts, summaries, Q&A, and infographics.
 
 - **url**: The YouTube URL, video ID, playlist ID, or comma-separated list of IDs.
-- **output_file**: (Optional) Path to save the output CSV. Defaults to `youtube-to-docs-artifacts/youtube-docs.csv`.
+- **output_file**: (Optional) Path to save the output CSV. Defaults to `youtube-to-docs-artifacts/youtube-docs.csv`. Can be a local path, `workspace` (or `w`) for Google Drive, or `sharepoint` (or `s`) for Microsoft SharePoint.
 - **transcript_source**: (Optional) Source for the transcript. Defaults to 'youtube' (fetches existing). set to an AI model name (e.g., 'gemini-3-flash-preview') to perform STT on extracted audio.
 - **model**: (Optional) The LLM model(s) to use for summarization, Q&A, and speaker extraction (e.g., 'gemini-3-flash-preview'). Can be a comma-separated list.
 - **tts_model**: (Optional) The TTS model and voice to use (e.g., 'gemini-2.5-flash-preview-tts-Kore').

@@ -71,7 +71,8 @@ def main(args_list: list[str] | None = None) -> None:
         help=(
             "Can be one of: \n"
             "Local file path to save the output CSV file.\n"
-            "`workspace` or `w` to store to Google Drive or a workspace folder ID."
+            "`workspace` or `w` to store to Google Drive or a workspace folder ID.\n"
+            "`sharepoint` or `s` to store to Microsoft SharePoint."
         ),
     )
     parser.add_argument(
