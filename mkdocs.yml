@@ -31,7 +31,9 @@ nav:
   - Home: index.md
   - Usage: usage.md
   - How It Works: how-this-works.md
-  - Development: development.md
+
+exclude_docs: |
+  development.md
 
 markdown_extensions:
   - admonition
