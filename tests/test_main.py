@@ -648,6 +648,82 @@ class TestMain(unittest.TestCase):
     @patch("youtube_to_docs.main.fetch_transcript")
     @patch("youtube_to_docs.main.get_model_pricing")
     @patch("youtube_to_docs.main.generate_summary")
+    @patch("youtube_to_docs.main.process_tts")
+    @patch("youtube_to_docs.main.generate_infographic")
+    @patch("youtube_to_docs.main.extract_speakers")
+    @patch("youtube_to_docs.main.generate_qa")
+    @patch("os.makedirs")
+    def test_all_gemini_flash_pro_infographic_flag(
+        self,
+        mock_makedirs,
+        mock_gen_qa,
+        mock_extract_speakers,
+        mock_gen_info,
+        mock_tts,
+        mock_gen_summary,
+        mock_get_pricing,
+        mock_fetch_trans,
+        mock_details,
+        mock_resolve,
+        mock_svc,
+    ):
+        mock_resolve.return_value = ["vid1"]
+        mock_details.return_value = (
+            "Title 1",
+            "Desc",
+            "2023-01-01",
+            "Chan",
+            "Tags",
+            "0:01:00",
+            "url1",
+        )
+        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_gen_summary.return_value = ("Summary 1", 100, 50)
+        mock_get_pricing.return_value = (0.0, 0.0)
+        mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
+        mock_extract_speakers.return_value = ("Speaker 1", 10, 10)
+        mock_gen_qa.return_value = ("Q&A", 20, 20)
+
+        # Ensure process_tts returns the dataframe it receives
+        mock_tts.side_effect = lambda df, *args, **kwargs: df
+
+        with patch(
+            "sys.argv",
+            [
+                "main.py",
+                "vid1",
+                "-o",
+                self.outfile,
+                "--all",
+                "gemini-flash-pro-infographic",
+            ],
+        ):
+            main.main()
+
+        # Check if generate_summary was called with gemini-3-flash-preview
+        mock_gen_summary.assert_called()
+        any_flash_summary = any(
+            call.args[0] == "gemini-3-flash-preview"
+            for call in mock_gen_summary.call_args_list
+        )
+        self.assertTrue(any_flash_summary)
+
+        # Check if process_tts was called with gemini-2.5-flash-preview-tts-Kore
+        mock_tts.assert_called()
+        self.assertEqual(
+            mock_tts.call_args.args[1], "gemini-2.5-flash-preview-tts-Kore"
+        )
+
+        # Check if generate_infographic was called with gemini-3-pro-image-preview
+        mock_gen_info.assert_called()
+        self.assertEqual(mock_gen_info.call_args.args[0], "gemini-3-pro-image-preview")
+
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("youtube_to_docs.main.get_model_pricing")
+    @patch("youtube_to_docs.main.generate_summary")
     @patch("youtube_to_docs.main.generate_one_sentence_summary")
     @patch("os.makedirs")
     def test_one_sentence_summary_column(

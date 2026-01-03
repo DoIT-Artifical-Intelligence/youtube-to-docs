@@ -59,6 +59,28 @@ def test_process_video_all_args():
         assert f"Successfully processed {url}" in result
 
 
+def test_process_video_all_suite():
+    """Test process_video with the all_suite parameter."""
+    with patch("youtube_to_docs.mcp_server.app_main") as mock_main:
+        url = "https://www.youtube.com/watch?v=123"
+        result = process_video(url=url, all_suite="gemini-flash")
+
+        expected_args = [
+            url,
+            "--outfile",
+            "youtube-to-docs-artifacts/youtube-docs.csv",
+            "--transcript",
+            "youtube",
+            "--language",
+            "en",
+            "--all",
+            "gemini-flash",
+        ]
+
+        mock_main.assert_called_once_with(expected_args)
+        assert f"Successfully processed {url}" in result
+
+
 def test_process_video_error():
     """Test process_video handles exceptions from app_main."""
     with patch("youtube_to_docs.mcp_server.app_main") as mock_main:
