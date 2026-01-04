@@ -63,6 +63,7 @@ def main(args_list: list[str] | None = None) -> None:
         default="atmGAHYpf_c",
         help=(
             "Can be one of: \n"
+            "A YouTube URL e.g. `https://www.youtube.com/watch?v=atmGAHYpf_c`\n"
             "A Video ID e.g. `atmGAHYpf_c`\n"
             "Playlist ID (starts with `PL` e.g. `PL8ZxoInteClyHaiReuOHpv6Z4SPrXtYtW`)\n"
             "Channel Handle (starts with `@` e.g. `@mga-hgo1740`)\n"

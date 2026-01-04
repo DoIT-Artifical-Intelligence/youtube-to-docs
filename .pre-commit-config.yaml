@@ -17,7 +17,7 @@ repos:
 
       - id: ty-check
         name: Type Check (Ty)
-        entry: uv tool run ty check
+        entry: uv run --with ty --all-extras --group test ty check
         language: system
         types: [python]
         pass_filenames: false

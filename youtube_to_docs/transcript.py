@@ -1,6 +1,7 @@
 """Helpers for YouTube metadata, audio extraction, and transcript retrieval."""
 
 import os
+import re
 import sys
 from typing import Any, List, Optional, Tuple, cast
 
@@ -68,6 +69,14 @@ def resolve_video_ids(video_id_input: str, youtube_service: Optional[Any]) -> Li
     into a list of video IDs.
     """
     video_ids: List[str] = []
+
+    # Handle full URLs
+    if "youtube.com" in video_id_input or "youtu.be" in video_id_input:
+        # Regex to capture the 11-character video ID from common URL formats
+        match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", video_id_input)
+        if match:
+            video_id_input = match.group(1)
+            print(f"Extracted video ID from URL: {video_id_input}")
 
     # Handle Channel Handles (e.g. @channelname)
     if video_id_input.startswith("@"):

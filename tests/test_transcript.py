@@ -38,6 +38,16 @@ class TestTranscript(unittest.TestCase):
         ids = transcript.resolve_video_ids("KuPc06JgI_A,GalhDyf3F8g", None)
         self.assertEqual(ids, ["KuPc06JgI_A", "GalhDyf3F8g"])
 
+    def test_resolve_video_ids_url_with_list_and_index(self):
+        url = "https://www.youtube.com/watch?v=B0x2I_doX9o&list=PLjIxerr5alF5ehaY60cANqEn-ojFxYAn2&index=7"
+        ids = transcript.resolve_video_ids(url, None)
+        self.assertEqual(ids, ["B0x2I_doX9o"])
+
+    def test_resolve_video_ids_short_url(self):
+        url = "https://youtu.be/B0x2I_doX9o"
+        ids = transcript.resolve_video_ids(url, None)
+        self.assertEqual(ids, ["B0x2I_doX9o"])
+
     def test_resolve_video_ids_playlist_no_service(self):
         with self.assertRaises(SystemExit):
             transcript.resolve_video_ids("PL8ZxoInteClyHaiReuOHpv6Z4SPrXtYtW", None)
