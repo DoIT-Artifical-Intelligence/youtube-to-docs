@@ -201,7 +201,9 @@ class GoogleDriveStorage(Storage):
             )
             files = results.get("files", [])
             if files:
-                print(f"Using existing folder: {folder_name} ({files[0]['id']})")
+                print(
+                    f"Using existing folder: https://drive.google.com/drive/folders/{files[0]['id']}"
+                )
                 return files[0]["id"]
             else:
                 file_metadata = {
@@ -213,7 +215,9 @@ class GoogleDriveStorage(Storage):
                     .create(body=file_metadata, fields="id")
                     .execute()
                 )
-                print(f"Created folder: {folder_name} ({folder.get('id')})")
+                print(
+                    f"Created folder: https://drive.google.com/drive/folders/{folder.get('id')}"
+                )
                 return folder.get("id")
         else:
             # Assume it is a Folder ID
