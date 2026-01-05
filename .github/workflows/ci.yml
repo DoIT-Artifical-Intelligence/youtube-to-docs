@@ -29,7 +29,7 @@ jobs:
       run: uv tool run ruff format --check .
 
     - name: Type Check
-      run: uv tool run ty check
+      run: uv run --with ty --all-extras --group test ty check
 
     - name: Run Tests
-      run: uv run pytest
+      run: uv run --all-extras --group test pytest
