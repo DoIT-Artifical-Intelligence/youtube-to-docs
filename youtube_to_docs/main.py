@@ -18,7 +18,12 @@ from youtube_to_docs.llms import (
     get_model_pricing,
 )
 from youtube_to_docs.models import MODEL_SUITES
-from youtube_to_docs.storage import GoogleDriveStorage, LocalStorage, M365Storage
+from youtube_to_docs.storage import (
+    GoogleDriveStorage,
+    LocalStorage,
+    M365Storage,
+    NullStorage,
+)
 from youtube_to_docs.transcript import (
     extract_audio,
     fetch_transcript,
@@ -78,7 +83,8 @@ def main(args_list: list[str] | None = None) -> None:
             "Can be one of: \n"
             "Local file path to save the output CSV file.\n"
             "`workspace` or `w` to store to Google Drive or a workspace folder ID.\n"
-            "`sharepoint` or `s` to store to Microsoft SharePoint."
+            "`sharepoint` or `s` to store to Microsoft SharePoint.\n"
+            "`none` or `n` to skip saving to a file (results will be in the log)."
         ),
     )
     parser.add_argument(
@@ -221,7 +227,12 @@ def main(args_list: list[str] | None = None) -> None:
 
     # Setup Output Directories
     # Setup Storage
-    if outfile in ("sharepoint", "s"):
+    if outfile.lower() in ("none", "n"):
+        vprint("Using Null storage. No files will be saved.")
+        storage = NullStorage()
+        outfile_path = "none.csv"
+        base_dir = "."
+    elif outfile in ("sharepoint", "s"):
         vprint(f"Using SharePoint storage. Output: {outfile}")
         storage = M365Storage()
         outfile_path = "youtube-docs.csv"
@@ -1421,6 +1432,12 @@ def main(args_list: list[str] | None = None) -> None:
                 )
                 if trans:
                     rprint(f"Transcript: {format_clickable_path(trans)}")
+
+        if outfile.lower() in ("none", "n"):
+            rprint("\n[bold green]Results (Not Saved):[/bold green]")
+            for key, value in row.items():
+                if value and not str(value).lower() == "nan":
+                    rprint(f"[bold]{key}:[/bold] {value}")
 
         rows.append(row)
 

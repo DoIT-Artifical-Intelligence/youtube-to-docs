@@ -11,7 +11,7 @@ from googleapiclient.http import MediaIoBaseUpload
 
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 CREDS_FILE = Path.home() / ".google_client_secret.json"
-TOKEN_FILE = Path.home() / ".token.json"
+TOKEN_FILE = Path.home() / ".google_client_token.json"
 
 
 def get_creds():

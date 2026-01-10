@@ -563,10 +563,14 @@ class TestMain(unittest.TestCase):
     @patch("youtube_to_docs.main.generate_qa")
     @patch("youtube_to_docs.main.extract_audio")
     @patch("youtube_to_docs.storage.LocalStorage.upload_file")
+    @patch("youtube_to_docs.main.generate_transcript")
+    @patch("youtube_to_docs.main.generate_one_sentence_summary")
     @patch("os.makedirs")
     def test_all_gemini_flash_flag(
         self,
         mock_makedirs,
+        mock_gen_one_sentence,
+        mock_gen_transcript,
         mock_upload_file,
         mock_extract_audio,
         mock_gen_qa,
@@ -596,6 +600,8 @@ class TestMain(unittest.TestCase):
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
         mock_extract_speakers.return_value = ("Speaker 1", 10, 10)
         mock_gen_qa.return_value = ("Q&A", 20, 20)
+        mock_gen_one_sentence.return_value = ("One sentence summary", 5, 5)
+        mock_gen_transcript.return_value = ("Transcript content", 50, 50)
         mock_extract_audio.return_value = self.dummy_audio
         mock_upload_file.return_value = "audio-files/vid1.m4a"
 
@@ -647,10 +653,14 @@ class TestMain(unittest.TestCase):
     @patch("youtube_to_docs.main.generate_qa")
     @patch("youtube_to_docs.main.extract_audio")
     @patch("youtube_to_docs.storage.LocalStorage.upload_file")
+    @patch("youtube_to_docs.main.generate_transcript")
+    @patch("youtube_to_docs.main.generate_one_sentence_summary")
     @patch("os.makedirs")
     def test_all_gemini_pro_flag(
         self,
         mock_makedirs,
+        mock_gen_one_sentence,
+        mock_gen_transcript,
         mock_upload_file,
         mock_extract_audio,
         mock_gen_qa,
@@ -680,6 +690,8 @@ class TestMain(unittest.TestCase):
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
         mock_extract_speakers.return_value = ("Speaker 1", 10, 10)
         mock_gen_qa.return_value = ("Q&A", 20, 20)
+        mock_gen_one_sentence.return_value = ("One sentence summary", 5, 5)
+        mock_gen_transcript.return_value = ("Transcript content", 50, 50)
         mock_extract_audio.return_value = self.dummy_audio
         mock_upload_file.return_value = "audio-files/vid1.m4a"
 
@@ -727,10 +739,14 @@ class TestMain(unittest.TestCase):
     @patch("youtube_to_docs.main.generate_qa")
     @patch("youtube_to_docs.main.extract_audio")
     @patch("youtube_to_docs.storage.LocalStorage.upload_file")
+    @patch("youtube_to_docs.main.generate_transcript")
+    @patch("youtube_to_docs.main.generate_one_sentence_summary")
     @patch("os.makedirs")
     def test_all_gemini_flash_pro_image_flag(
         self,
         mock_makedirs,
+        mock_gen_one_sentence,
+        mock_gen_transcript,
         mock_upload_file,
         mock_extract_audio,
         mock_gen_qa,
@@ -760,6 +776,8 @@ class TestMain(unittest.TestCase):
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
         mock_extract_speakers.return_value = ("Speaker 1", 10, 10)
         mock_gen_qa.return_value = ("Q&A", 20, 20)
+        mock_gen_one_sentence.return_value = ("One sentence summary", 5, 5)
+        mock_gen_transcript.return_value = ("Transcript content", 50, 50)
         mock_extract_audio.return_value = self.dummy_audio
         mock_upload_file.return_value = "audio-files/vid1.m4a"
 
@@ -848,6 +866,57 @@ class TestMain(unittest.TestCase):
         self.assertIn(
             "gemini-test one sentence summary cost from youtube ($)", df.columns
         )
+
+    @patch("youtube_to_docs.main.get_youtube_service")
+    @patch("youtube_to_docs.main.resolve_video_ids")
+    @patch("youtube_to_docs.main.get_video_details")
+    @patch("youtube_to_docs.main.fetch_transcript")
+    @patch("youtube_to_docs.main.get_model_pricing")
+    @patch("youtube_to_docs.main.generate_summary")
+    @patch("os.makedirs")
+    def test_null_storage(
+        self,
+        mock_makedirs,
+        mock_gen_summary,
+        mock_get_pricing,
+        mock_fetch_trans,
+        mock_details,
+        mock_resolve,
+        mock_svc,
+    ):
+        mock_resolve.return_value = ["vid1"]
+        mock_details.return_value = (
+            "Title 1",
+            "Desc",
+            "2023-01-01",
+            "Chan",
+            "Tags",
+            "0:01:00",
+            "url1",
+        )
+        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_gen_summary.return_value = ("Summary 1", 100, 50)
+        mock_get_pricing.return_value = (0.0, 0.0)
+
+        with patch(
+            "sys.argv",
+            ["main.py", "vid1", "-o", "n", "-m", "gemini-test", "--verbose"],
+        ):
+            # Capture stdout to ensure it doesn't fail and we can check output if needed
+            with patch("youtube_to_docs.main.rprint") as mock_rprint:
+                main.main()
+
+        # Verify no file was created (this relies on the fact that self.outfile
+        # is NOT used)
+        self.assertFalse(os.path.exists("none.csv"))
+
+        # Verify rprint was called (results are printed)
+        mock_rprint.assert_called()
+        # Check if some expected text was printed
+        any_results_header = any(
+            "Results (Not Saved)" in str(call) for call in mock_rprint.call_args_list
+        )
+        self.assertTrue(any_results_header)
 
 
 if __name__ == "__main__":

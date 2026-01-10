@@ -99,7 +99,7 @@ Create a file at `~/.google_client_secret.json` with your Google Cloud OAuth 2.0
   }
 }
 ```
-*   **First Run**: The tool will open a browser window to authenticate and generate a `~/.token.json` file for future non-interactive use.
+*   **First Run**: The tool will open a browser window to authenticate and generate a `~/.google_client_token.json` file for future non-interactive use.
 
 #### Microsoft 365 (SharePoint/OneDrive)
 Create a file at `~/.azure_client.json` with your Azure App Registration details.
@@ -130,7 +130,7 @@ youtube-to-docs
 | Argument | Description | Default | Example |
 | :--- | :--- | :--- | :--- |
 | `video_id` | The YouTube content to process. Can be a **YouTube URL**, **Video ID**, **Playlist ID** (starts with `PL`), **Channel Handle** (starts with `@`), or a **comma-separated list** of Video IDs. | `atmGAHYpf_c` | `youtube-to-docs @mychannel` |
-| `-o`, `--outfile` | Path to save the output CSV file. <br> - Local path: `my-data.csv` <br> - Google Workspace: `workspace` or `w` (saves to Drive folder `youtube-to-docs-artifacts`) or a specific Folder ID. <br> - SharePoint/OneDrive: `sharepoint` or `s` (saves to `youtube-to-docs-artifacts`). | `youtube-to-docs-artifacts/youtube-docs.csv` | `-o sharepoint` |
+| `-o`, `--outfile` | Path to save the output CSV file. <br> - Local path: `my-data.csv` <br> - Google Workspace: `workspace` or `w` (saves to Drive folder `youtube-to-docs-artifacts`) or a specific Folder ID. <br> - SharePoint/OneDrive: `sharepoint` or `s` (saves to `youtube-to-docs-artifacts`). <br> - No-op: `none` or `n` (skips saving to a file, results are printed to the console). | `youtube-to-docs-artifacts/youtube-docs.csv` | `-o n` |
 | `-t`, `--transcript` | The transcript source to use. Can be `'youtube'` (default) to fetch existing YouTube transcripts, or an AI model name to perform STT on extracted audio. | `youtube` | `-t gemini-2.0-flash-exp` |
 | `-m`, `--model` | The LLM(s) to use for speaker extraction, Q&A generation, and summarization. Supports models from Google (Gemini), Vertex AI, AWS Bedrock, and Azure Foundry. **Can be a comma-separated list.** | `None` | `-m gemini-3-flash-preview,vertex-claude-haiku-4-5@20251001` |
 | `--tts` | The TTS model and voice to use for generating audio summaries. Format: `{model}-{voice}`. | `None` | `--tts gemini-2.5-flash-preview-tts-Kore` |

@@ -31,7 +31,8 @@ def process_video(
         output_file: Path to save the output CSV file.
             Defaults to 'youtube-to-docs-artifacts/youtube-docs.csv'.
             Can also be 'workspace' or 'w' to store to Google Drive,
-            or 'sharepoint' or 's' to store to Microsoft SharePoint.
+            'sharepoint' or 's' to store to Microsoft SharePoint,
+            or 'none' or 'n' to skip saving to a file (results will be in the log).
         transcript_source: The transcript source to use. 'youtube' (default)
             fetches existing transcripts. Provide an AI model name
             (e.g., 'gemini-3-flash-preview') to perform STT on extracted audio.

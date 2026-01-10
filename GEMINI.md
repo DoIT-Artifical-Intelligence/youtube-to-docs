@@ -9,7 +9,7 @@ Processes a YouTube video to generate transcripts, summaries, Q&A, and infograph
 
 Here are the following args for the tool:
 - **url**: The YouTube URL, video ID, playlist ID, or comma-separated list of IDs.
-- **output_file**: (Optional) Path to save the output CSV. Defaults to `youtube-to-docs-artifacts/youtube-docs.csv`. Can be a local path, `workspace` (or `w`) for Google Drive, or `sharepoint` (or `s`) for Microsoft SharePoint.
+- **output_file**: (Optional) Path to save the output CSV. Defaults to `youtube-to-docs-artifacts/youtube-docs.csv`. Can be a local path, `workspace` (or `w`) for Google Drive, `sharepoint` (or `s`) for Microsoft SharePoint, or `none` (or `n`) to skip saving to a file.
 - **transcript_source**: (Optional) Source for the transcript. Defaults to 'youtube' (fetches existing). set to an AI model name (e.g., 'gemini-3-flash-preview', 'gemini-3-pro-preview') to perform STT on extracted audio.
 - **model**: (Optional) The LLM model(s) to use for summarization, Q&A, and speaker extraction (e.g., 'gemini-3-flash-preview'). Can be a comma-separated list.
 - **tts_model**: (Optional) The TTS model and voice to use (e.g., 'gemini-2.5-flash-preview-tts-Kore', 'gemini-2.5-pro-preview-tts-Kore').

@@ -169,7 +169,7 @@ class GoogleDriveStorage(Storage):
 
         creds = None
         creds_file = Path.home() / ".google_client_secret.json"
-        token_file = Path.home() / ".token.json"
+        token_file = Path.home() / ".google_client_token.json"
 
         if token_file.exists():
             creds = Credentials.from_authorized_user_file(token_file, self.SCOPES)
@@ -1099,3 +1099,44 @@ class M365Storage(Storage):
         except Exception as e:
             print(f"Error downloading {path}: {e}")
             return None
+
+
+class NullStorage(Storage):
+    """Implementation of Storage that does nothing."""
+
+    def exists(self, path: str) -> bool:
+        return False
+
+    def read_text(self, path: str) -> str:
+        raise FileNotFoundError(f"NullStorage cannot read: {path}")
+
+    def read_bytes(self, path: str) -> bytes:
+        raise FileNotFoundError(f"NullStorage cannot read: {path}")
+
+    def write_text(self, path: str, content: str) -> str:
+        return ""
+
+    def write_bytes(self, path: str, content: bytes) -> str:
+        return ""
+
+    def load_dataframe(self, path: str) -> Optional[pl.DataFrame]:
+        return None
+
+    def save_dataframe(self, df: pl.DataFrame, path: str) -> str:
+        return ""
+
+    def ensure_directory(self, path: str) -> None:
+        pass
+
+    def upload_file(
+        self, local_path: str, target_path: str, content_type: Optional[str] = None
+    ) -> str:
+        return ""
+
+    def get_full_path(self, path: str) -> str:
+        return path
+
+    def get_local_file(
+        self, path: str, download_dir: Optional[str] = None
+    ) -> Optional[str]:
+        return None

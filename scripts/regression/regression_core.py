@@ -343,9 +343,12 @@ def get_default_model(available_models: List[str]) -> str:
 
 def resolve_drive_folder(folder_name: str, delete_if_exists: bool = False) -> str:
     """Finds or creates a folder in Google Drive and returns its ID."""
-    token_file = Path.home() / ".token.json"
+    token_file = Path.home() / ".google_client_token.json"
     if not token_file.exists():
-        print("Error: .token.json not found. Run a local workspace command first.")
+        print(
+            "Error: .google_client_token.json not found. "
+            "Run a local workspace command first."
+        )
         sys.exit(1)
 
     creds = Credentials.from_authorized_user_file(
