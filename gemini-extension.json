@@ -6,8 +6,16 @@
   "mcpServers": {
     "youtube-to-docs": {
       "command": "uv",
-      "args": ["--directory", "${extensionPath}", "run", "--all-extras", "python", "-m", "youtube_to_docs.mcp_server"],
-      "cwd": "${extensionPath}"
+      "args": [
+        "--directory",
+        "${extensionPath}",
+        "run",
+        "--all-extras",
+        "python",
+        "-m",
+        "youtube_to_docs.mcp_server"
+      ],
+      "cwd": "${workspacePath}"
     }
   }
 }
