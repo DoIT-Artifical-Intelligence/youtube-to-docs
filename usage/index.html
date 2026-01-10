@@ -1278,7 +1278,7 @@
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">}</span>
 </code></pre></div>
-*   <strong>First Run</strong>: The tool will open a browser window to authenticate and generate a <code>~/.token.json</code> file for future non-interactive use.</p>
+*   <strong>First Run</strong>: The tool will open a browser window to authenticate and generate a <code>~/.google_client_token.json</code> file for future non-interactive use.</p>
 <h4 id="microsoft-365-sharepointonedrive">Microsoft 365 (SharePoint/OneDrive)</h4>
 <p>Create a file at <code>~/.azure_client.json</code> with your Azure App Registration details.</p>
 <p><div class="language-json highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
@@ -1313,9 +1313,9 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>-o</code>, <code>--outfile</code></td>
-<td style="text-align: left;">Path to save the output CSV file. <br> - Local path: <code>my-data.csv</code> <br> - Google Workspace: <code>workspace</code> or <code>w</code> (saves to Drive folder <code>youtube-to-docs-artifacts</code>) or a specific Folder ID. <br> - SharePoint/OneDrive: <code>sharepoint</code> or <code>s</code> (saves to <code>youtube-to-docs-artifacts</code>).</td>
+<td style="text-align: left;">Path to save the output CSV file. <br> - Local path: <code>my-data.csv</code> <br> - Google Workspace: <code>workspace</code> or <code>w</code> (saves to Drive folder <code>youtube-to-docs-artifacts</code>) or a specific Folder ID. <br> - SharePoint/OneDrive: <code>sharepoint</code> or <code>s</code> (saves to <code>youtube-to-docs-artifacts</code>). <br> - No-op: <code>none</code> or <code>n</code> (skips saving to a file, results are printed to the console).</td>
 <td style="text-align: left;"><code>youtube-to-docs-artifacts/youtube-docs.csv</code></td>
-<td style="text-align: left;"><code>-o sharepoint</code></td>
+<td style="text-align: left;"><code>-o n</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>-t</code>, <code>--transcript</code></td>
