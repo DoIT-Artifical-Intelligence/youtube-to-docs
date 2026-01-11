@@ -142,7 +142,7 @@ class TestLLMs(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_resp
 
         tags, in_tokens, out_tokens = llms.generate_tags(
-            "gemini-pro", "transcript content", "en"
+            "gemini-pro", "summary content", "en"
         )
         self.assertEqual(tags, "Tag1, Tag2, Tag3, Tag4, Tag5")
         self.assertEqual(in_tokens, 80)

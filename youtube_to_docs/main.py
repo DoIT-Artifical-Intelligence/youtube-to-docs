@@ -811,42 +811,6 @@ def main(args_list: list[str] | None = None) -> None:
                             row[qa_cost_col_name] = qa_cost
                             vprint(f"Q&A cost: ${qa_cost:.2f}")
 
-                # Tag Generation
-                tags_col_name = f"Tags {transcript_arg} {model_name} model{col_suffix}"
-                tags_cost_col_name = (
-                    f"{normalize_model_name(model_name)} "
-                    f"tags cost from {transcript_arg}{col_suffix} ($)"
-                )
-
-                if not row.get(tags_col_name):
-                    vprint(f"Generating tags using model: {model_name} ({language})")
-                    tags_text, tags_input, tags_output = generate_tags(
-                        model_name, transcript, language=language
-                    )
-
-                    # Ensure no more than 5 tags
-                    tag_list = [t.strip() for t in tags_text.split(",") if t.strip()]
-                    if len(tag_list) > 5:
-                        tag_list = tag_list[:5]
-                    row[tags_col_name] = ", ".join(tag_list)
-
-                    if (
-                        tags_text.strip() == "nan"
-                        or tags_text.strip() == 'float("nan")'
-                    ):
-                        row[tags_col_name] = float("nan")
-
-                    # Calculate Tags Cost
-                    if verbose:
-                        input_price, output_price = get_model_pricing(model_name)
-                        if input_price is not None and output_price is not None:
-                            tags_cost = (tags_input / 1_000_000) * input_price + (
-                                tags_output / 1_000_000
-                            ) * output_price
-                            tags_cost = round(tags_cost, 2)
-                            row[tags_cost_col_name] = tags_cost
-                            vprint(f"Tags cost: ${tags_cost:.2f}")
-
                 # Check if we already have it in the row (from existing_row
                 # or just loaded)
                 if summary_col_name in row and row[summary_col_name]:
@@ -1005,6 +969,43 @@ def main(args_list: list[str] | None = None) -> None:
                             cost = round(cost, 2)
                             row[one_sentence_cost_col_name] = cost
                             vprint(f"One sentence summary cost: ${cost:.2f}")
+
+                # Tag Generation
+                tags_col_name = f"Tags {transcript_arg} {model_name} model{col_suffix}"
+                tags_cost_col_name = (
+                    f"{normalize_model_name(model_name)} "
+                    f"tags cost from {transcript_arg}{col_suffix} ($)"
+                )
+
+                if not row.get(tags_col_name) and row.get(summary_col_name):
+                    summary_for_tags = row[summary_col_name]
+                    vprint(f"Generating tags using model: {model_name} ({language})")
+                    tags_text, tags_input, tags_output = generate_tags(
+                        model_name, summary_for_tags, language=language
+                    )
+
+                    # Ensure no more than 5 tags
+                    tag_list = [t.strip() for t in tags_text.split(",") if t.strip()]
+                    if len(tag_list) > 5:
+                        tag_list = tag_list[:5]
+                    row[tags_col_name] = ", ".join(tag_list)
+
+                    if (
+                        tags_text.strip() == "nan"
+                        or tags_text.strip() == 'float("nan")'
+                    ):
+                        row[tags_col_name] = float("nan")
+
+                    # Calculate Tags Cost
+                    if verbose:
+                        input_price, output_price = get_model_pricing(model_name)
+                        if input_price is not None and output_price is not None:
+                            tags_cost = (tags_input / 1_000_000) * input_price + (
+                                tags_output / 1_000_000
+                            ) * output_price
+                            tags_cost = round(tags_cost, 2)
+                            row[tags_cost_col_name] = tags_cost
+                            vprint(f"Tags cost: ${tags_cost:.2f}")
 
                 # --- Secondary Speaker Extraction from YouTube (if applicable) ---
                 yt_speakers_text = 'float("nan")'
