@@ -14,8 +14,7 @@
         "python",
         "-m",
         "youtube_to_docs.mcp_server"
-      ],
-      "cwd": "${cwd}"
+      ]
     }
   }
 }
