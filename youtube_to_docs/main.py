@@ -189,9 +189,14 @@ def main(args_list: list[str] | None = None) -> None:
     verbose = args.verbose
 
     if not verbose:
-        # Suppress "Both GOOGLE_API_KEY and GEMINI_API_KEY are set" warning
-        # from google-genai library unless verbose is enabled.
-        logging.getLogger("google_genai._api_client").setLevel(logging.ERROR)
+        # Suppress noisy logs from external libraries unless verbose is enabled.
+        logging.getLogger("google_genai").setLevel(logging.ERROR)
+        logging.getLogger("google.generativeai").setLevel(logging.ERROR)
+        logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
+        logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        # Set root logger to WARNING to catch others
+        logging.getLogger().setLevel(logging.WARNING)
 
     def vprint(*args, **kwargs):
         if verbose:
