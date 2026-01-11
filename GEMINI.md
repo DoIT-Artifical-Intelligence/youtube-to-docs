@@ -37,6 +37,10 @@ Here are the following args for the tool:
     *   `/infographic <url> <family>`: Generates an infographic and summary. 
         *   `<family>` can be "gemini flash" or "gemini pro".
         *   Defaults to Flash summary (`gemini-3-flash-preview`) with relevant image model.
+    *   `/ks <url> <family> <language>`: Kitchen Sink - generates everything and combines into a video.
+        *   `<family>` can be "gemini flash" or "gemini pro". Defaults to "gemini pro".
+        *   `<language>` can be "spanish", "french", etc. Defaults to "en".
+        *   Equivalent to `youtube_to_docs --all gemini-pro --verbose --combine-infographic-audio`.
 3.  **Clarify Parameters**:
     *   **Model**: If not specified, ask: "What model do you want to use for the summary?".
     *   **Output Location**: If not specified, ask: "Where you want the output file saved? Is the default location (youtube-to-docs-artifacts/youtube-docs.csv) okay?"
