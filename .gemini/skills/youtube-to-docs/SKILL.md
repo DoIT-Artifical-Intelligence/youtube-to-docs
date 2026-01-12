@@ -9,6 +9,14 @@ description: "Comprehensive suite for processing YouTube videos. Use this when t
 
 This skill allows you to process YouTube videos to extract transcripts, generate AI summaries, create infographics, and even produce video summaries. You have access to the `process_video` tool which handles these operations.
 
+## Requirements & Dependencies
+
+The `process_video` tool is a high-level interface that relies on several optional libraries ("extras") and system binaries to function. These are managed automatically when running via the provided MCP configuration or `uv`.
+
+*   **Python Libraries**: Many features (audio extraction, video generation, cloud storage) require specific extras.
+*   **System Binaries**: Features like video creation (`combine_infographic_audio`) require `ffmpeg` (handled by the `static-ffmpeg` library).
+*   **Automatic Setup**: The MCP server (configured in `gemini-extension.json`) uses `uv run --all-extras` to ensure all necessary libraries are installed in a managed environment before execution.
+
 ## Workflows
 
 ### 1. Transcript Extraction
@@ -49,7 +57,7 @@ Use this when the user asks for "everything", a "kitchen sink" run, or a "video 
 *   **Key Arguments**:
     *   `url`: The YouTube link.
     *   `all_suite`: Shortcut to set models (`'gemini-flash'` or `'gemini-pro'`).
-    *   `combine_infographic_audio`: Set to `True` to create the final video.
+    *   `combine_infographic_audio`: Set to `True` to create the final video (Requires `video` extra).
     *   `verbose`: Set to `True` for detailed logging.
     *   `languages`: Target language code (e.g., 'es', 'fr', 'en').
 *   **Model Selection Strategy**:
@@ -66,25 +74,25 @@ Use this when the user specifies particular models or output locations.
 
 *   **Output Locations**:
     *   **Local**: Default.
-    *   **Google Drive**: `output_file='workspace'` (or `'w'`).
-    *   **SharePoint**: `output_file='sharepoint'` (or `'s'`).
+    *   **Google Drive**: `output_file='workspace'` (Requires `workspace` extra).
+    *   **SharePoint**: `output_file='sharepoint'` (Requires `m365` extra).
 *   **Transcription Source**:
     *   Default is YouTube captions.
-    *   To use AI for transcription (STT), set `transcript_source` to a model name (e.g., `'gemini-3-flash-preview'`).
+    *   To use AI for transcription (STT), set `transcript_source` to a model name (e.g., `'gemini-3-flash-preview'`) (Requires `audio` extra).
 
 ## Tool Reference: `process_video`
 
-| Argument | Description | Examples |
-| :--- | :--- | :--- |
-| `url` | **Required**. YouTube URL, ID, Playlist ID, or Channel Handle. | `https://youtu.be/...`, `@channel` |
-| `model` | LLM for summaries/Q&A. | `gemini-3-flash-preview` |
-| `infographic_model` | Model for generating the infographic image. | `gemini-3-pro-image-preview`, `gemini-2.5-flash-image` |
-| `tts_model` | Model for text-to-speech audio. | `gemini-2.5-flash-preview-tts-Kore` |
-| `all_suite` | Shortcut to apply a suite of models. | `gemini-pro`, `gemini-flash` |
-| `combine_infographic_audio` | Boolean. If True, creates an MP4 video. | `True` |
-| `languages` | Target language(s). | `es`, `fr`, `en` |
-| `output_file` | Destination for the CSV report. | `workspace`, `sharepoint`, `my-report.csv` |
-| `transcript_source` | Source for transcript (default: 'youtube'). | `gemini-3-flash-preview` (for AI STT) |
+| Argument | Description | Required Extra | Examples |
+| :--- | :--- | :--- | :--- |
+| `url` | **Required**. YouTube URL, ID, Playlist ID, or Channel Handle. | - | `https://youtu.be/...`, `@channel` |
+| `model` | LLM for summaries/Q&A. | `gcp` / `azure` | `gemini-3-flash-preview` |
+| `infographic_model` | Model for generating the infographic image. | `gcp` | `gemini-3-pro-image-preview` |
+| `tts_model` | Model for text-to-speech audio. | `gcp` | `gemini-2.5-flash-preview-tts-Kore` |
+| `all_suite` | Shortcut to apply a suite of models. | `gcp`, `audio`, `video` | `gemini-pro`, `gemini-flash` |
+| `combine_infographic_audio` | Boolean. If True, creates an MP4 video. | `video` | `True` |
+| `languages` | Target language(s). | - | `es`, `fr`, `en` |
+| `output_file` | Destination for the CSV report. | `workspace` / `m365` | `workspace`, `sharepoint` |
+| `transcript_source` | Source for transcript (default: 'youtube'). | `audio` (for AI STT) | `gemini-3-flash-preview` |
 
 ## Examples
 
@@ -99,3 +107,23 @@ Use this when the user specifies particular models or output locations.
 
 **User**: "Summarize this playlist and save it to Drive."
 **Action**: Call `process_video(url='PL...', model='gemini-3-flash-preview', output_file='workspace')`
+
+## Development & CLI Usage
+
+While this skill primarily uses the `process_video` tool, you can also run the underlying CLI manually for testing or development.
+
+**Always use `uv` to run the tool** (do not use `python` directly) to ensure dependencies are correctly resolved:
+
+```bash
+uv run youtube-to-docs --help
+```
+
+See `docs/usage.md` for full documentation and `docs/development.md` for setup details.
+
+**MCP Configuration:**
+The MCP server definition is located in `gemini-extension.json`. It is explicitly configured to use `uv` with `--all-extras` to ensure the correct environment and dependencies are used:
+
+```json
+"command": "uv",
+"args": [ ..., "run", "--all-extras", "python", "-m", "youtube_to_docs.mcp_server" ]
+```

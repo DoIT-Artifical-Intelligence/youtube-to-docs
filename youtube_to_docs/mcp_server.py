@@ -25,6 +25,10 @@ def process_video(
     """
     Process a YouTube video to generate transcripts, summaries, Q&A, and infographics.
 
+    Note: Advanced features (video generation, AI transcription, cloud storage)
+    require optional dependencies to be available in the environment. The MCP server
+    is pre-configured to handle this via 'uv run --all-extras'.
+
     Args:
         url: The YouTube URL or video ID. Can also be a playlist ID
             or comma-separated list of IDs.
