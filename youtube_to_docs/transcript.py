@@ -162,7 +162,9 @@ def get_video_details(
         return None
 
 
-def fetch_transcript(video_id: str, language: str = "en") -> Optional[Tuple[str, bool]]:
+def fetch_transcript(
+    video_id: str, language: str = "en"
+) -> Optional[Tuple[str, bool, List[Dict[str, Any]]]]:
     """
     Fetches the transcript for a given video ID.
     Tries to find a transcript in the requested language.
@@ -220,13 +222,19 @@ def fetch_transcript(video_id: str, language: str = "en") -> Optional[Tuple[str,
 
         if transcript_obj:
             transcript_data = transcript_obj.fetch()
-            # Handle both dicts and objects (some versions return FetchedTranscriptSnippet)
+
+            # Handle both dicts and objects
+            # (some versions return FetchedTranscriptSnippet)
             def get_val(item, key):
                 return item[key] if isinstance(item, dict) else getattr(item, key)
 
             transcript_text = " ".join([get_val(t, "text") for t in transcript_data])
-            is_generated = transcript_obj.is_generated
-            return transcript_text, is_generated, transcript_data
+            is_generated = bool(transcript_obj.is_generated)
+            return (
+                str(transcript_text),
+                is_generated,
+                cast(List[Dict[str, Any]], transcript_data),
+            )
 
         return None
 

@@ -56,7 +56,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
 
@@ -110,7 +110,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
 
@@ -178,7 +178,7 @@ class TestMain(unittest.TestCase):
             "0:02:00",
             "url2",
         )
-        mock_fetch_trans.return_value = ("Transcript 2", False)
+        mock_fetch_trans.return_value = ("Transcript 2", False, "")
         mock_gen_summary.return_value = ("Summary 2", 200, 100)
         mock_get_pricing.return_value = (0.0, 0.0)
 
@@ -336,7 +336,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
 
@@ -397,7 +397,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
@@ -481,7 +481,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcripción 1", False)
+        mock_fetch_trans.return_value = ("Transcripción 1", False, "")
         mock_gen_summary.return_value = ("Resumen 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
 
@@ -543,7 +543,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript", False)
+        mock_fetch_trans.return_value = ("Transcript", False, "")
         mock_gen_summary.return_value = ("Summary", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
 
@@ -620,7 +620,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
@@ -713,7 +713,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
@@ -802,7 +802,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
         mock_gen_info.return_value = (b"fake_image_bytes", 100, 1290)
@@ -879,7 +879,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_gen_one_sentence.return_value = ("One Sentence Summary 1", 10, 10)
         mock_get_pricing.return_value = (0.0, 0.0)
@@ -932,7 +932,7 @@ class TestMain(unittest.TestCase):
             "0:01:00",
             "url1",
         )
-        mock_fetch_trans.return_value = ("Transcript 1", False)
+        mock_fetch_trans.return_value = ("Transcript 1", False, "")
         mock_gen_summary.return_value = ("Summary 1", 100, 50)
         mock_get_pricing.return_value = (0.0, 0.0)
 

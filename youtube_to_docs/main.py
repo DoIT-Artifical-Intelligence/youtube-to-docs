@@ -539,8 +539,13 @@ def main(args_list: list[str] | None = None) -> None:
 
                         # Save SRT
                         srt_content = format_as_srt(transcript_data)
-                        saved_srt_path = storage.write_text(srt_target_path, srt_content)
-                        vprint(f"Saved YouTube SRT: {format_clickable_path(saved_srt_path)}")
+                        saved_srt_path = storage.write_text(
+                            srt_target_path, srt_content
+                        )
+                        vprint(
+                            "Saved YouTube SRT: "
+                            f"{format_clickable_path(saved_srt_path)}"
+                        )
                         row[col_srt] = saved_srt_path
                     except Exception as e:
                         print(f"Error writing YouTube transcript/SRT: {e}")
@@ -565,7 +570,7 @@ def main(args_list: list[str] | None = None) -> None:
                     # Try fetching English fresh
                     en_result = fetch_transcript(video_id, language="en")
                     if en_result:
-                        youtube_transcript, en_is_generated = en_result
+                        youtube_transcript, en_is_generated, _ = en_result
                         vprint(
                             f"Fetched English transcript as fallback for {language} "
                             "processing."
@@ -607,6 +612,7 @@ def main(args_list: list[str] | None = None) -> None:
             # --- AI Transcript Generation (if requested) ---
             ai_transcript = ""
             ai_srt_content = ""
+            srt_transcript = ""
             stt_cost = float("nan")
             transcript = youtube_transcript  # Default to YouTube transcript
 
@@ -703,7 +709,7 @@ def main(args_list: list[str] | None = None) -> None:
                                 srt_target_path, ai_srt_content
                             )
                             vprint(
-                                "Saved AI SRT: " f"{format_clickable_path(saved_srt_path)}"
+                                f"Saved AI SRT: {format_clickable_path(saved_srt_path)}"
                             )
                             row[ai_srt_col] = saved_srt_path
                         except Exception as e:
@@ -721,16 +727,17 @@ def main(args_list: list[str] | None = None) -> None:
                                 row[stt_cost_col] = round(stt_cost, 2)
                                 vprint(f"STT cost: ${row[stt_cost_col]:.2f}")
 
-                # If AI transcript exists (either found or generated),
-                # use it for summaries
-                if ai_transcript:
-                    transcript = ai_transcript
-                    # Use SRT for Q&A if available
-                    srt_transcript = ai_srt_content if ai_srt_content else transcript
-                else:
-                    transcript = youtube_transcript
-                    srt_transcript = srt_content if srt_content else transcript
+            # If AI transcript exists (either found or generated),
+            # use it for summaries
+            if ai_transcript:
+                transcript = ai_transcript
+                # Use SRT for Q&A if available
+                srt_transcript = ai_srt_content if ai_srt_content else transcript
+            else:
+                transcript = youtube_transcript
+                srt_transcript = srt_content if srt_content else transcript
 
+            if transcript_arg != "youtube":
                 row[f"Transcript characters from {transcript_arg}{col_suffix}"] = len(
                     ai_transcript
                 )
@@ -877,7 +884,9 @@ def main(args_list: list[str] | None = None) -> None:
                         speakers_text,
                         url,
                         language=language,
-                        timing_reference=srt_content if transcript_arg != "youtube" else None,
+                        timing_reference=srt_content
+                        if transcript_arg != "youtube"
+                        else None,
                     )
                     row[qa_col_name] = qa_text
 
@@ -1321,6 +1330,7 @@ def main(args_list: list[str] | None = None) -> None:
                             model_name,
                             youtube_transcript,
                             yt_speakers_text,
+                            url,
                             language=language,
                         )
 
