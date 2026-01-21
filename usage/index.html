@@ -1243,7 +1243,12 @@
 <tr>
 <td style="text-align: left;"><code>PROJECT_ID</code></td>
 <td style="text-align: left;">Google Cloud Project ID.</td>
-<td style="text-align: left;">GCP Vertex models (<code>-m vertex...</code>).</td>
+<td style="text-align: left;">GCP Vertex models (<code>-m vertex...</code>) and GCP STT (<code>-t gcp...</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>YTD_GCS_BUCKET_NAME</code></td>
+<td style="text-align: left;">Google Cloud Storage bucket name (write access).</td>
+<td style="text-align: left;">GCP STT models (<code>-t gcp...</code>) for temp audio storage.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>AWS_BEARER_TOKEN_BEDROCK</code></td>
@@ -1319,7 +1324,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>-t</code>, <code>--transcript</code></td>
-<td style="text-align: left;">The transcript source to use. Can be <code>'youtube'</code> (default) to fetch existing YouTube transcripts, or an AI model name to perform STT on extracted audio.</td>
+<td style="text-align: left;">The transcript source to use. Can be <code>'youtube'</code> (default) to fetch existing YouTube transcripts, or an AI model name to perform STT on extracted audio (e.g. <code>gemini...</code> for Gemini API, <code>gcp-chirp3</code> for GCP Speech-to-Text V2).</td>
 <td style="text-align: left;"><code>youtube</code></td>
 <td style="text-align: left;"><code>-t gemini-2.0-flash-exp</code></td>
 </tr>
