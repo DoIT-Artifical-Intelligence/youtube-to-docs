@@ -56,7 +56,7 @@ def process_video(
         combine_infographic_audio: If True, combines the infographic and audio summary
             into a video file. Requires both tts_model and infographic_model.
         all_suite: Shortcut to use a specific model suite for everything.
-            e.g., 'gemini-flash', 'gemini-pro', or 'gemini-flash-pro-image'.
+            e.g., 'gemini-flash', 'gemini-pro', 'gemini-flash-pro-image', or 'gcp-pro'.
         verbose: If True, enables verbose logging in the output.
     """
     args = [

@@ -17,4 +17,10 @@ MODEL_SUITES = {
         "infographic": "gemini-3-pro-image-preview",
         "transcript": "gemini-3-flash-preview",
     },
+    "gcp-pro": {
+        "model": "gemini-3-pro-preview",
+        "tts": "gcp-chirp3",
+        "infographic": "gemini-3-pro-image-preview",
+        "transcript": "gcp-chirp3",
+    },
 }
