@@ -20,6 +20,7 @@ from googleapiclient.http import (
     MediaIoBaseDownload,
     MediaIoBaseUpload,
 )
+from rich import print as rprint
 
 
 class Storage(ABC):
@@ -201,7 +202,7 @@ class GoogleDriveStorage(Storage):
             )
             files = results.get("files", [])
             if files:
-                print(
+                rprint(
                     f"Using existing folder: https://drive.google.com/drive/folders/{files[0]['id']}"
                 )
                 return files[0]["id"]
@@ -215,7 +216,7 @@ class GoogleDriveStorage(Storage):
                     .create(body=file_metadata, fields="id")
                     .execute()
                 )
-                print(
+                rprint(
                     f"Created folder: https://drive.google.com/drive/folders/{folder.get('id')}"
                 )
                 return folder.get("id")
@@ -389,8 +390,31 @@ class GoogleDriveStorage(Storage):
             "parents": [parent_id],
         }
 
-        fh = io.BytesIO(content.encode("utf-8"))
-        media = MediaIoBaseUpload(fh, mimetype="text/markdown", resumable=True)
+        # Conversion logic for better rendering in Google Docs
+        mimetype = "text/markdown"
+        upload_content = content.encode("utf-8")
+
+        if filename.endswith(".md") or filename.endswith(".txt"):
+            try:
+                import pypandoc
+
+                # Convert Markdown/Text to HTML for better Google Doc conversion
+                # Google Drive v3 API converts text/html to Google Docs very well.
+                # Extra args to preserve table formatting
+                html_content = pypandoc.convert_text(
+                    content, to="html", format="md", extra_args=["--wrap=preserve"]
+                )
+                upload_content = html_content.encode("utf-8")
+                mimetype = "text/html"
+            except ImportError:
+                # Fallback to raw markdown if pypandoc is not available
+                pass
+            except Exception as e:
+                print(f"Warning: pypandoc conversion failed: {e}")
+                pass
+
+        fh = io.BytesIO(upload_content)
+        media = MediaIoBaseUpload(fh, mimetype=mimetype, resumable=True)
 
         if existing_id:
             # Update

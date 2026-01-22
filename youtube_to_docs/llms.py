@@ -362,6 +362,7 @@ def generate_transcript(
 
         generate_content_config = types.GenerateContentConfig()
 
+        print(f"Starting transcription with model: {model_name}...")
         response = client.models.generate_content(
             model=model_name,
             contents=contents,
@@ -482,7 +483,7 @@ def _transcribe_gcp(
             ),
         )
 
-        print("Starting transcription...")
+        print(f"Starting transcription with model: {model_name}...")
         operation = client.batch_recognize(request=request)
 
         # Poll logic

@@ -144,40 +144,49 @@ def add_question_numbers(markdown_table: str) -> str:
     if not lines:
         return markdown_table
 
-    # Check if it's a valid table (has header and separator)
-    if len(lines) < 2:
+    # Find the header row and separator row
+    header_idx = -1
+    for i in range(len(lines) - 1):
+        line = lines[i].strip()
+        next_line = lines[i + 1].strip()
+        if "|" in line and ("---" in next_line or "-|-" in next_line):
+            header_idx = i
+            break
+
+    if header_idx == -1:
+        # Fallback: if we can't find a clear table header+separator, return as is
         return markdown_table
 
     new_lines = []
+    # Add lines before the table as is
+    for i in range(header_idx):
+        new_lines.append(lines[i])
+
+    # Header row
+    header = lines[header_idx].strip()
+    if not header.startswith("|"):
+        header = "|" + header
+    new_lines.append(f"| question number {header}")
+
+    # Separator row
+    separator = lines[header_idx + 1].strip()
+    if not separator.startswith("|"):
+        separator = "|" + separator
+    new_lines.append(f"|---{separator}")
+
+    # Data rows
     question_counter = 1
-
-    for i, line in enumerate(lines):
-        stripped_line = line.strip()
-        if not stripped_line:
+    for i in range(header_idx + 2, len(lines)):
+        line = lines[i].strip()
+        if not line:
             continue
-
-        if i == 0:
-            # Header row
-            # Ensure it starts with | (some LLMs might miss it)
-            if not stripped_line.startswith("|"):
-                stripped_line = "|" + stripped_line
-            new_lines.append(f"| question number {stripped_line}")
-        elif i == 1 and ("---" in stripped_line or "-|-" in stripped_line):
-            # Separator row
-            if not stripped_line.startswith("|"):
-                stripped_line = "|" + stripped_line
-            new_lines.append(f"|---{stripped_line}")
+        if line.startswith("|"):
+            new_lines.append(f"| {question_counter} {line}")
+            question_counter += 1
+        elif "|" in line:
+            new_lines.append(f"| {question_counter} | {line}")
+            question_counter += 1
         else:
-            # Data row
-            if stripped_line.startswith("|"):
-                new_lines.append(f"| {question_counter} {stripped_line}")
-                question_counter += 1
-            else:
-                # Handle potential malformed table rows or text outside the table
-                if "|" in stripped_line:  # It has columns but maybe missing start pipe
-                    new_lines.append(f"| {question_counter} | {stripped_line}")
-                    question_counter += 1
-                else:
-                    new_lines.append(line)
+            new_lines.append(lines[i])
 
     return "\n".join(new_lines)
