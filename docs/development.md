@@ -116,7 +116,7 @@ uv tool run ty check
 To run prek hooks:
 
 ```bash
-uv tool run prek run --all-files
+uv run prek run --all-files
 ```
 
 ## Documentation

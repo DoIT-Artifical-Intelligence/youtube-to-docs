@@ -4,7 +4,13 @@ from unittest.mock import MagicMock, patch
 
 import polars as pl
 
-from youtube_to_docs.tts import generate_speech, parse_tts_arg, process_tts
+from youtube_to_docs.tts import (
+    generate_speech,
+    generate_speech_gcp,
+    is_gcp_tts_model,
+    parse_tts_arg,
+    process_tts,
+)
 
 
 class TestTTS(unittest.TestCase):
@@ -178,6 +184,105 @@ class TestTTS(unittest.TestCase):
         # Verify write was called
         mock_storage.write_bytes.assert_called_once()
         args, _ = mock_storage.write_bytes.call_args
+        self.assertTrue(args[1].startswith(b"RIFF"))
+
+
+class TestGCPTTS(unittest.TestCase):
+    """Tests for GCP Chirp3 TTS functionality."""
+
+    def test_parse_tts_arg_gcp_simple(self):
+        """Test parsing gcp-chirp3 without a voice (defaults to Kore)."""
+        model, voice = parse_tts_arg("gcp-chirp3")
+        self.assertEqual(model, "gcp-chirp3")
+        self.assertEqual(voice, "Kore")
+
+    def test_parse_tts_arg_gcp_with_voice(self):
+        """Test parsing gcp-chirp3 with explicit voice."""
+        model, voice = parse_tts_arg("gcp-chirp3-Kore")
+        self.assertEqual(model, "gcp-chirp3")
+        self.assertEqual(voice, "Kore")
+
+        model, voice = parse_tts_arg("gcp-chirp3-Orus")
+        self.assertEqual(model, "gcp-chirp3")
+        self.assertEqual(voice, "Orus")
+
+    def test_is_gcp_tts_model(self):
+        """Test GCP model detection helper."""
+        self.assertTrue(is_gcp_tts_model("gcp-chirp3"))
+        self.assertTrue(is_gcp_tts_model("gcp-chirp3-Kore"))
+        self.assertFalse(is_gcp_tts_model("gemini-2.5-flash-preview-tts"))
+        self.assertFalse(is_gcp_tts_model("some-other-model"))
+
+    @patch("youtube_to_docs.tts.texttospeech", create=True)
+    def test_generate_speech_gcp_success(self, mock_tts_module):
+        """Test successful GCP TTS generation."""
+        # Import the function to test with mocked module
+        with patch.dict("sys.modules", {"google.cloud.texttospeech": mock_tts_module}):
+            # Setup mock client and response
+            mock_client = MagicMock()
+            mock_tts_module.TextToSpeechClient.return_value = mock_client
+            mock_tts_module.SynthesisInput.return_value = MagicMock()
+            mock_tts_module.VoiceSelectionParams.return_value = MagicMock()
+            mock_tts_module.AudioConfig.return_value = MagicMock()
+            mock_tts_module.AudioEncoding.LINEAR16 = "LINEAR16"
+
+            mock_response = MagicMock()
+            mock_response.audio_content = b"fake_pcm_audio_data"
+            mock_client.synthesize_speech.return_value = mock_response
+
+            # Execute
+            audio_data = generate_speech_gcp("Hello world", "Kore", "en-US")
+
+            # Verify
+            self.assertEqual(audio_data, b"fake_pcm_audio_data")
+
+    def test_generate_speech_gcp_import_error(self):
+        """Test GCP TTS when google-cloud-texttospeech is not installed."""
+        with patch.dict("sys.modules", {"google.cloud": None}):
+            # This should catch the import error and return empty bytes
+            audio_data = generate_speech_gcp("Hello", "Kore", "en-US")
+            self.assertEqual(audio_data, b"")
+            # Note: Due to how the import works, this may not trigger cleanly
+            # in all test environments
+
+    @patch("youtube_to_docs.tts.generate_speech_gcp")
+    def test_process_tts_with_gcp_model(self, mock_generate_speech_gcp):
+        """Test process_tts routes to GCP TTS for gcp-chirp3 models."""
+        df = pl.DataFrame(
+            {
+                "Summary File 1": ["/path/to/summary.md"],
+            }
+        )
+
+        mock_storage = MagicMock()
+
+        def exists_side_effect(path):
+            if path.endswith(".md"):
+                return True
+            return False
+
+        mock_storage.exists.side_effect = exists_side_effect
+        mock_storage.read_text.return_value = "Summary text"
+        mock_storage.write_bytes.return_value = "/saved/path.wav"
+
+        # Return valid PCM data (even bytes for 16-bit)
+        mock_generate_speech_gcp.return_value = b"1234"
+
+        # Execute with GCP model
+        updated_df = process_tts(df, "gcp-chirp3-Kore", mock_storage, "/tmp")
+
+        # Verify GCP function was called
+        mock_generate_speech_gcp.assert_called_once_with(
+            "Summary text", "Kore", "en-US"
+        )
+
+        # Verify new column was created
+        self.assertIn("Summary Audio File 1 gcp-chirp3-Kore File", updated_df.columns)
+
+        # Verify WAV file was written
+        mock_storage.write_bytes.assert_called_once()
+        args, _ = mock_storage.write_bytes.call_args
+        self.assertTrue(args[0].endswith(".wav"))
         self.assertTrue(args[1].startswith(b"RIFF"))
 
 

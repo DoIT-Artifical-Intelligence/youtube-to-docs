@@ -475,6 +475,22 @@ wheels = [
 ]
 
 [[package]]
+name = "google-cloud-texttospeech"
+version = "2.34.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpcio" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e5/2b/cf31829499db007107d6a6777bb92dec8b9cc369aa7e579664c0c530c521/google_cloud_texttospeech-2.34.0.tar.gz", hash = "sha256:65837c3bc728f37290009dbef892df87eae45ad80905559096d1107822074f62", size = 192973, upload-time = "2026-01-15T13:05:09.152Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/0a/292131ec789045f1c646f3ced623b457dc5f52ce8c681f66f2def5724a76/google_cloud_texttospeech-2.34.0-py3-none-any.whl", hash = "sha256:0929c06e91a5b8309db7b93d79e7e1e3e7751d21c5da72fa71843c041fc29ecb", size = 196009, upload-time = "2026-01-15T13:02:44.617Z" },
+]
+
+[[package]]
 name = "google-crc32c"
 version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2048,7 +2064,7 @@ wheels = [
 
 [[package]]
 name = "youtube-to-docs"
-version = "0.0.42"
+version = "0.0.43"
 source = { editable = "." }
 dependencies = [
     { name = "google-api-python-client" },
@@ -2067,6 +2083,7 @@ all = [
     { name = "google-auth-oauthlib" },
     { name = "google-cloud-speech" },
     { name = "google-cloud-storage" },
+    { name = "google-cloud-texttospeech" },
     { name = "google-genai" },
     { name = "msal" },
     { name = "openai" },
@@ -2085,6 +2102,7 @@ azure = [
 gcp = [
     { name = "google-cloud-speech" },
     { name = "google-cloud-storage" },
+    { name = "google-cloud-texttospeech" },
     { name = "google-genai" },
 ]
 m365 = [
@@ -2120,6 +2138,7 @@ requires-dist = [
     { name = "google-auth-oauthlib", marker = "extra == 'workspace'" },
     { name = "google-cloud-speech", marker = "extra == 'gcp'", specifier = ">=2.29.0" },
     { name = "google-cloud-storage", marker = "extra == 'gcp'" },
+    { name = "google-cloud-texttospeech", marker = "extra == 'gcp'" },
     { name = "google-genai", marker = "extra == 'gcp'" },
     { name = "isodate", specifier = ">=0.7.2" },
     { name = "mcp", specifier = ">=1.25.0" },

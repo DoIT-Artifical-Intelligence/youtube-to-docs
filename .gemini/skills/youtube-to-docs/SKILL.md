@@ -90,7 +90,7 @@ Use this when the user specifies particular models or output locations.
 | `model` | LLM for summaries/Q&A. | `gcp` / `azure` | `gemini-3-flash-preview` |
 | `infographic_model` | Model for generating the infographic image. | `gcp` | `gemini-3-pro-image-preview` |
 | `alt_text_model` | Model for generating multimodal alt text for the infographic. | `gcp` | `gemini-3-flash-preview` |
-| `tts_model` | Model for text-to-speech audio. | `gcp` | `gemini-2.5-flash-preview-tts-Kore` |
+| `tts_model` | Model for text-to-speech audio. | `gcp` | `gemini-2.5-flash-preview-tts-Kore`, `gcp-chirp3-Kore` |
 | `all_suite` | Shortcut to apply a suite of models. | `gcp`, `audio`, `video` | `gemini-pro`, `gemini-flash` |
 | `combine_infographic_audio` | Boolean. If True, creates an MP4 video. | `video` | `True` |
 | `languages` | Target language(s). | - | `es`, `fr`, `en` |

@@ -26,7 +26,7 @@ To keep the installation footprint small, many features are optional. You can en
 | `m365` | Required for saving to SharePoint/OneDrive. | `msal`, `fastexcel`, `xlsxwriter`, `pypandoc` |
 | `aws` | AWS Bedrock support. | None |
 | `azure` | Required if using Azure OpenAI models. | `openai` |
-| `gcp` | Required if using Google Gemini or Vertex AI models. | `google-genai` |
+| `gcp` | Required if using Google Gemini or Vertex AI models. | `google-genai`, `google-cloud-speech`, `google-cloud-storage`, `google-cloud-texttospeech` |
 | `all` | Installs all of the above. | All optional dependencies. |
 
 **How to use extras with `uvx`:**
@@ -74,7 +74,7 @@ Set the following environment variables based on the AI providers you intend to 
 | :--- | :--- | :--- |
 | `YOUTUBE_DATA_API_KEY` | API key for the YouTube Data API v3. | Fetching video metadata. |
 | `GEMINI_API_KEY` | API key for Google Gemini models. | Gemini models (`-m gemini...`). |
-| `PROJECT_ID` | Google Cloud Project ID. | GCP Vertex models (`-m vertex...`) and GCP STT (`-t gcp...`). |
+| `PROJECT_ID` | Google Cloud Project ID. | GCP Vertex models (`-m vertex...`), GCP STT (`-t gcp...`) and GCP TTS (`--tts gcp...`). |
 | `YTD_GCS_BUCKET_NAME` | Google Cloud Storage bucket name (write access). | GCP STT models (`-t gcp...`) for temp audio storage. |
 | `AWS_BEARER_TOKEN_BEDROCK` | AWS Bearer Token. | AWS Bedrock models (`-m bedrock...`). |
 | `AZURE_FOUNDRY_ENDPOINT` | Azure Foundry Endpoint URL. | Azure Foundry models (`-m foundry...`). |
@@ -134,7 +134,7 @@ youtube-to-docs
 | `-o`, `--outfile` | Path to save the output CSV file. <br> - Local path: `my-data.csv` <br> - Google Workspace: `workspace` or `w` (saves to Drive folder `youtube-to-docs-artifacts`) or a specific Folder ID. <br> - SharePoint/OneDrive: `sharepoint` or `s` (saves to `youtube-to-docs-artifacts`). <br> - No-op: `none` or `n` (skips saving to a file, results are printed to the console). | `youtube-to-docs-artifacts/youtube-docs.csv` | `-o n` |
 | `-t`, `--transcript` | The transcript source to use. Can be `'youtube'` (default) to fetch existing YouTube transcripts, or an AI model name to perform STT on extracted audio (e.g. `gemini...` for Gemini API, `gcp-chirp3` for GCP Speech-to-Text V2). | `youtube` | `-t gemini-2.0-flash-exp` |
 | `-m`, `--model` | The LLM(s) to use for speaker extraction, Q&A generation, tag generation, and summarization. Supports models from Google (Gemini), Vertex AI, AWS Bedrock, and Azure Foundry. **Can be a comma-separated list.** | `None` | `-m gemini-3-flash-preview,vertex-claude-haiku-4-5@20251001` |
-| `--tts` | The TTS model and voice to use for generating audio summaries. Format: `{model}-{voice}`. | `None` | `--tts gemini-2.5-flash-preview-tts-Kore` |
+| `--tts` | The TTS model and voice to use for generating audio summaries. Format: `{model}-{voice}`. Supports Gemini models (e.g., `gemini-2.5-flash-preview-tts-Kore`) and GCP Cloud TTS (e.g., `gcp-chirp3-Kore`). | `None` | `--tts gcp-chirp3-Kore` |
 | `-i`, `--infographic`| The image model to use for generating a visual summary. Supports models from Google (Gemini, Imagen), AWS Bedrock (Titan, Nova Canvas), and Azure Foundry. | `None` | `--infographic gemini-2.5-flash-image` |
 | `--alt-text-model` | The LLM model to use for generating multimodal alt text for the infographic. Defaults to the summary model. | `None` | `--alt-text-model gemini-3-flash-preview` |
 | `-nys`, `--no-youtube-summary` | If set, skips generating a secondary summary from the YouTube transcript when using an AI model for the primary transcript. | `False` | `--no-youtube-summary` |

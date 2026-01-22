@@ -130,7 +130,9 @@ def main(args_list: list[str] | None = None) -> None:
         help=(
             "The TTS model and voice to use. "
             "Format: `{model}-{voice}` e.g. `gemini-2.5-flash-preview-tts-Kore` \n"
-            "or `gemini-2.5-pro-preview-tts-Kore`"
+            "or `gemini-2.5-pro-preview-tts-Kore` \n"
+            "GCP Cloud TTS: `gcp-chirp3` or `gcp-chirp3-{voice}` "
+            "(e.g. `gcp-chirp3-Kore`)"
         ),
     )
     parser.add_argument(

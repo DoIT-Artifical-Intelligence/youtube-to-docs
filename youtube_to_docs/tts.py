@@ -21,6 +21,58 @@ def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
         wf.writeframes(pcm)
 
 
+def generate_speech_gcp(
+    text: str, voice_name: str, language_code: Optional[str] = None
+) -> bytes:
+    """
+    Generates speech from text using Google Cloud Text-to-Speech API.
+    Returns raw PCM audio bytes (LINEAR16 format, 24kHz, mono).
+    """
+    try:
+        from google.cloud import texttospeech
+    except ImportError:
+        print(
+            "Error: google-cloud-texttospeech is required for GCP TTS models. "
+            "Install with `pip install '.[gcp]'`"
+        )
+        return b""
+
+    try:
+        client = texttospeech.TextToSpeechClient()
+
+        input_text = texttospeech.SynthesisInput(text=text)
+
+        # Build the voice name from language code and voice name
+        # e.g., language_code="en-US", voice_name="Kore" -> "en-US-Chirp3-HD-Kore"
+        if language_code:
+            full_voice_name = f"{language_code}-Chirp3-HD-{voice_name}"
+        else:
+            full_voice_name = f"en-US-Chirp3-HD-{voice_name}"
+
+        voice = texttospeech.VoiceSelectionParams(
+            language_code=language_code or "en-US",
+            name=full_voice_name,
+        )
+
+        # Use LINEAR16 (PCM) to match Gemini TTS output format
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.LINEAR16,
+            sample_rate_hertz=24000,
+        )
+
+        response = client.synthesize_speech(
+            input=input_text,
+            voice=voice,
+            audio_config=audio_config,
+        )
+
+        return response.audio_content
+
+    except Exception as e:
+        print(f"Error generating speech with GCP TTS: {e}")
+        return b""
+
+
 def generate_speech(
     text: str, model_name: str, voice_name: str, language_code: Optional[str] = None
 ) -> bytes:
@@ -68,13 +120,32 @@ def generate_speech(
         return b""
 
 
+def is_gcp_tts_model(model_name: str) -> bool:
+    """Check if the model is a GCP Cloud TTS model."""
+    return model_name.startswith("gcp-")
+
+
 def parse_tts_arg(tts_arg: str) -> Tuple[str, str]:
     """
     Parses the --tts argument into (model_name, voice_name).
-    Expects format: model-name-voice
-    Example: gemini-2.5-flash-preview-tts-Kore -> (gemini-2.5-flash-preview-tts, Kore)
+
+    For Gemini models:
+        gemini-2.5-flash-preview-tts-Kore -> (gemini-2.5-flash-preview-tts, Kore)
+    For GCP Chirp3 models:
+        gcp-chirp3-Kore -> (gcp-chirp3, Kore)
+        gcp-chirp3 -> (gcp-chirp3, Kore)  # Default voice
     """
-    # Assuming the voice name is the last part after the last hyphen
+    # Handle GCP models specially
+    if tts_arg.startswith("gcp-chirp3"):
+        if tts_arg == "gcp-chirp3":
+            return "gcp-chirp3", "Kore"  # Default voice
+        # Format: gcp-chirp3-VoiceName
+        parts = tts_arg.split("-", 2)  # Split into ['gcp', 'chirp3', 'VoiceName']
+        if len(parts) >= 3:
+            return "gcp-chirp3", parts[2]
+        return "gcp-chirp3", "Kore"
+
+    # Gemini models: voice name is the last part after the last hyphen
     if "-" in tts_arg:
         parts = tts_arg.rsplit("-", 1)
         return parts[0], parts[1]
@@ -211,23 +282,42 @@ def process_tts(
                 new_col_values.append(None)
                 continue
 
-            pcm_data = generate_speech(text, model_name, voice_name, lang_code)
+            # Generate audio using the appropriate TTS engine
+            if is_gcp_tts_model(model_name):
+                # GCP TTS with LINEAR16 returns PCM data that needs WAV wrapping
+                pcm_data = generate_speech_gcp(text, voice_name, lang_code)
+                if pcm_data:
+                    try:
+                        wav_io = io.BytesIO()
+                        wave_file(wav_io, pcm_data)
+                        wav_bytes = wav_io.getvalue()
 
-            if pcm_data:
-                try:
-                    # Write to BytesIO then storage.write_bytes
-                    wav_io = io.BytesIO()
-                    wave_file(wav_io, pcm_data)
-                    wav_bytes = wav_io.getvalue()
-
-                    saved_path = storage.write_bytes(target_path, wav_bytes)
-                    rprint(f"Saved audio: {format_clickable_path(saved_path)}")
-                    new_col_values.append(saved_path)
-                except Exception as e:
-                    print(f"Error writing audio file: {e}")
+                        saved_path = storage.write_bytes(target_path, wav_bytes)
+                        rprint(f"Saved audio: {format_clickable_path(saved_path)}")
+                        new_col_values.append(saved_path)
+                    except Exception as e:
+                        print(f"Error writing audio file: {e}")
+                        new_col_values.append(None)
+                else:
                     new_col_values.append(None)
             else:
-                new_col_values.append(None)
+                # Gemini TTS returns PCM data that needs to be wrapped in WAV
+                pcm_data = generate_speech(text, model_name, voice_name, lang_code)
+                if pcm_data:
+                    try:
+                        # Write to BytesIO then storage.write_bytes
+                        wav_io = io.BytesIO()
+                        wave_file(wav_io, pcm_data)
+                        wav_bytes = wav_io.getvalue()
+
+                        saved_path = storage.write_bytes(target_path, wav_bytes)
+                        rprint(f"Saved audio: {format_clickable_path(saved_path)}")
+                        new_col_values.append(saved_path)
+                    except Exception as e:
+                        print(f"Error writing audio file: {e}")
+                        new_col_values.append(None)
+                else:
+                    new_col_values.append(None)
 
         updated_df = updated_df.with_columns(
             pl.Series(name=new_col_name, values=new_col_values)
