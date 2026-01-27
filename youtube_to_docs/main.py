@@ -318,7 +318,8 @@ def main(args_list: list[str] | None = None) -> None:
 
     rprint(f"Processing {len(video_ids)} videos.")
     rprint(f"Processing Videos: {video_ids}")
-    rprint(f"Saving to: {outfile}")
+    display_outfile = "SharePoint" if outfile in ("s", "sharepoint") else outfile
+    rprint(f"Saving to: {display_outfile}")
 
     if model_names:
         vprint(f"Summarizing using models: {model_names}")

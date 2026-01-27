@@ -971,7 +971,7 @@ class M365Storage(Storage):
 
     def _upload(self, remote_path: str, content: bytes, content_type: str) -> dict:
         encoded_path = quote(remote_path)
-        url = f"https://graph.microsoft.com/v1.0/me/drive/root:/{encoded_path}:/content"
+        url = f"https://graph.microsoft.com/v1.0/me/drive/root:/{encoded_path}:/content?@microsoft.graph.conflictBehavior=replace"
         headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": content_type,
